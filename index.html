@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Triad Solutions — Skräddarsydd mjukvara för SMB</title>
+  <style>
+    /* ============================================
+       RESET & BASE
+    ============================================ */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --black:   #000000;
+      --white:   #ffffff;
+      --g100:    #f5f5f7;
+      --g200:    #e8e8ed;
+      --g400:    #a1a1a6;
+      --g600:    #636366;
+      --g800:    #1c1c1e;
+      --g900:    #111111;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--black); }
+    ::-webkit-scrollbar-thumb { background: var(--g600); border-radius: 3px; }
+
+    /* ============================================
+       TYPOGRAPHY HELPERS
+    ============================================ */
+    .label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--g600);
+      margin-bottom: 14px;
+      display: block;
+    }
+
+    .section-title {
+      font-size: clamp(34px, 5vw, 64px);
+      font-weight: 200;
+      letter-spacing: -.025em;
+      line-height: 1.08;
+      background: linear-gradient(175deg, #fff 30%, #666 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .section-body {
+      font-size: clamp(15px, 1.6vw, 18px);
+      font-weight: 300;
+      color: var(--g400);
+      line-height: 1.75;
+    }
+
+    /* ============================================
+       DIVIDER
+    ============================================ */
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(255,255,255,.09), transparent);
+    }
+
+    /* ============================================
+       BUTTONS
+    ============================================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 100px;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 500;
+      letter-spacing: .015em;
+      text-decoration: none;
+      transition: background .2s, transform .2s, border-color .2s;
+      border: none;
+      white-space: nowrap;
+    }
+    .btn-sm  { padding: 8px 20px;  font-size: 13px; }
+    .btn-md  { padding: 13px 32px; font-size: 15px; }
+    .btn-lg  { padding: 16px 40px; font-size: 16px; }
+    .btn-full { width: 100%; padding: 15px; font-size: 15px; }
+
+    .btn-white {
+      background: var(--white);
+      color: var(--black);
+    }
+    .btn-white:hover { background: var(--g200); transform: scale(1.015); }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--white);
+      border: 1px solid rgba(255,255,255,.22);
+    }
+    .btn-outline:hover {
+      background: rgba(255,255,255,.06);
+      border-color: rgba(255,255,255,.4);
+    }
+
+    /* ============================================
+       NAVBAR
+    ============================================ */
+    #nav {
+      position: fixed;
+      inset: 0 0 auto 0;
+      z-index: 900;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      background: rgba(0,0,0,.72);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      transition: background .3s;
+    }
+
+    /* Logo */
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      text-decoration: none;
+    }
+    .nav-logo-svg { height: 28px; width: auto; flex-shrink: 0; }
+    .nav-wordmark { display: flex; flex-direction: column; line-height: 1.1; }
+    .nav-triad    { font-size: 13px; font-weight: 700; letter-spacing: .13em; color: var(--white); }
+    .nav-sol      { font-size: 8px;  font-weight: 300; letter-spacing: .22em; color: var(--g400); }
+
+    /* Links */
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--g400);
+      text-decoration: none;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--white); }
+
+    /* Navbar CTA — white pill with white text on dark bg */
+    .nav-cta.btn-white {
+      background: transparent !important;
+      color: #ffffff !important;
+      border: 1px solid rgba(255,255,255,.45) !important;
+    }
+    .nav-cta.btn-white:hover {
+      background: rgba(255,255,255,.1) !important;
+      border-color: rgba(255,255,255,.7) !important;
+    }
+    /* Light mode override (on white hero) */
+    #nav.light .nav-cta.btn-white {
+      background: #000 !important;
+      color: #fff !important;
+      border-color: transparent !important;
+    }
+    #nav.light .nav-cta.btn-white:hover {
+      background: #333 !important;
+    }
+
+    /* Hamburger */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+    }
+    .hamburger span {
+      display: block;
+      width: 22px;
+      height: 1.5px;
+      background: var(--white);
+      transition: all .3s;
+    }
+
+    /* Mobile nav drawer */
+    @media (max-width: 768px) {
+      #nav { padding: 0 20px; }
+      .nav-cta  { display: none; }
+      .hamburger { display: flex; }
+
+      .nav-links {
+        display: none;
+        position: fixed;
+        top: 58px; left: 0; right: 0;
+        background: rgba(0,0,0,.96);
+        backdrop-filter: blur(24px);
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 24px 20px 32px;
+        gap: 20px;
+        border-bottom: 1px solid rgba(255,255,255,.06);
+      }
+      .nav-links.open { display: flex; }
+      .nav-links a { font-size: 16px; color: var(--white); }
+    }
+
+    /* ============================================
+       HERO
+    ============================================ */
+    #hero-scroll-container {
+      height: 160vh;
+    }
+
+    #hero-sticky {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      will-change: background-color;
+    }
+
+    #hero-title {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transform-origin: center center;
+      will-change: transform;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    #hero-triad {
+      font-size: clamp(90px, 18vw, 220px);
+      font-weight: 700;
+      letter-spacing: -.03em;
+      color: #000000;
+      line-height: 0.88;
+      display: block;
+    }
+
+    #hero-solutions {
+      font-size: clamp(14px, 2.8vw, 36px);
+      font-weight: 300;
+      letter-spacing: .38em;
+      color: #000000;
+      display: block;
+      margin-top: .18em;
+    }
+
+    /* Scroll hint */
+    #scroll-hint {
+      position: absolute;
+      bottom: 44px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      pointer-events: none;
+      will-change: opacity;
+    }
+    #scroll-hint-text {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: #000;
+    }
+    #scroll-hint-arrow {
+      animation: scrollBounce 1.6s cubic-bezier(.4,0,.2,1) infinite;
+    }
+    @keyframes scrollBounce {
+      0%   { transform: translateY(0);   opacity: 1; }
+      50%  { transform: translateY(8px); opacity: .4; }
+      100% { transform: translateY(0);   opacity: 1; }
+    }
+
+    /* navbar light mode (on white hero) */
+    #nav.light {
+      background: rgba(255,255,255,.82) !important;
+      border-bottom-color: rgba(0,0,0,.08);
+    }
+    #nav.light .nav-links a { color: #444; }
+    #nav.light .nav-links a:hover { color: #000; }
+    #nav.light .nav-triad { color: #000; }
+    #nav.light .nav-sol   { color: #666; }
+    #nav.light .hamburger span { background: #000; }
+    #nav.light .btn-white { background: #000; color: #fff; }
+    #nav.light .btn-white:hover { background: #333; }
+
+    /* ============================================
+       SECTIONS BASE
+    ============================================ */
+    .section {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 120px 40px;
+    }
+
+    @media (max-width: 768px) {
+      .section { padding: 80px 20px; }
+    }
+
+    /* ============================================
+       ABOUT
+    ============================================ */
+    #about-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+
+    .about-text .section-title { margin-bottom: 22px; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .stat {
+      padding: 30px 28px;
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 18px;
+      background: rgba(255,255,255,.02);
+    }
+
+    .stat-n {
+      font-size: 38px;
+      font-weight: 200;
+      letter-spacing: -.02em;
+      line-height: 1;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, #fff 0%, #888 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-l { font-size: 13px; color: var(--g600); font-weight: 300; }
+
+    @media (max-width: 1024px) {
+      #about-inner { grid-template-columns: 1fr; gap: 60px; }
+    }
+    @media (max-width: 480px) {
+      .stats { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* ============================================
+       PROCESS
+    ============================================ */
+    .process-head { margin-bottom: 72px; }
+    .process-head .section-title { margin-top: 12px; }
+
+    .process-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 24px;
+      overflow: hidden;
+    }
+
+    .step {
+      padding: 48px 32px;
+      border-right: 1px solid rgba(255,255,255,.07);
+      background: rgba(255,255,255,.015);
+      transition: background .3s;
+    }
+    .step:last-child { border-right: none; }
+    .step:hover { background: rgba(255,255,255,.04); }
+
+    .step-num {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .2em;
+      color: var(--g600);
+      margin-bottom: 24px;
+    }
+
+    .step-title {
+      font-size: 18px;
+      font-weight: 400;
+      color: var(--white);
+      letter-spacing: -.01em;
+      margin-bottom: 14px;
+    }
+
+    .step-body { font-size: 14px; color: var(--g400); line-height: 1.75; font-weight: 300; }
+
+    @media (max-width: 1024px) {
+      .process-grid { grid-template-columns: 1fr 1fr; }
+      .step:nth-child(2) { border-right: none; }
+      .step:nth-child(1), .step:nth-child(2) { border-bottom: 1px solid rgba(255,255,255,.07); }
+    }
+    @media (max-width: 640px) {
+      .process-grid { grid-template-columns: 1fr; }
+      .step { border-right: none; border-bottom: 1px solid rgba(255,255,255,.07); }
+      .step:last-child { border-bottom: none; }
+    }
+
+    /* ============================================
+       SERVICES
+    ============================================ */
+    .services-head { margin-bottom: 72px; }
+    .services-head .section-title { margin-top: 12px; }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+    }
+
+    .card {
+      padding: 44px 38px;
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 24px;
+      background: rgba(255,255,255,.02);
+      position: relative;
+      overflow: hidden;
+      transition: border-color .3s, background .3s, transform .3s;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 24px;
+      background: radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .card:hover {
+      border-color: rgba(255,255,255,.14);
+      background: rgba(255,255,255,.04);
+      transform: translateY(-4px);
+    }
+
+    .card-icon { width: 46px; height: 46px; margin-bottom: 28px; opacity: .65; }
+
+    .card-title {
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--white);
+      letter-spacing: -.01em;
+      margin-bottom: 14px;
+    }
+
+    .card-body { font-size: 14px; color: var(--g400); line-height: 1.75; font-weight: 300; }
+
+    @media (max-width: 1024px) { .services-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 640px)  { .services-grid { grid-template-columns: 1fr; } }
+
+    /* ============================================
+       PRICING
+    ============================================ */
+    .pricing-head { margin-bottom: 72px; }
+    .pricing-head .section-title { margin-top: 12px; }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+      align-items: start;
+    }
+
+    .p-card {
+      padding: 44px 38px;
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 24px;
+      background: rgba(255,255,255,.02);
+      position: relative;
+      transition: transform .3s;
+    }
+    .p-card:hover { transform: translateY(-4px); }
+
+    .p-card.featured {
+      border-color: rgba(255,255,255,.18);
+      background: rgba(255,255,255,.05);
+    }
+
+    .p-badge {
+      position: absolute;
+      top: -13px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--white);
+      color: var(--black);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      padding: 4px 16px;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
+
+    .p-tier {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--g600);
+      margin-bottom: 14px;
+    }
+
+    .p-price {
+      font-size: clamp(26px, 3vw, 38px);
+      font-weight: 200;
+      color: var(--white);
+      letter-spacing: -.02em;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .p-from { font-size: 13px; color: var(--g600); margin-bottom: 28px; }
+
+    .p-rule { height: 1px; background: rgba(255,255,255,.07); margin-bottom: 24px; }
+
+    .p-desc { font-size: 13px; color: var(--g400); line-height: 1.7; font-weight: 300; margin-bottom: 28px; }
+
+    .p-feats {
+      list-style: none;
+      margin-bottom: 36px;
+    }
+    .p-feats li {
+      display: flex;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--g400);
+      font-weight: 300;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,.04);
+    }
+    .p-feats li::before { content: '—'; color: var(--g600); flex-shrink: 0; }
+
+    @media (max-width: 1024px) { .pricing-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 640px)  { .pricing-grid { grid-template-columns: 1fr; } }
+
+    /* ============================================
+       TESTIMONIALS
+    ============================================ */
+    .test-head { margin-bottom: 72px; }
+    .test-head .section-title { margin-top: 12px; }
+
+    .test-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+    }
+
+    .t-card {
+      padding: 44px 38px;
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 24px;
+      background: rgba(255,255,255,.02);
+      position: relative;
+    }
+
+    .t-card::before {
+      content: '\201C';
+      position: absolute;
+      top: 18px; left: 34px;
+      font-size: 90px;
+      font-weight: 200;
+      color: rgba(255,255,255,.05);
+      line-height: 1;
+      font-family: Georgia, serif;
+      pointer-events: none;
+    }
+
+    .t-text {
+      font-size: 15px;
+      color: var(--g200);
+      line-height: 1.8;
+      font-weight: 300;
+      font-style: italic;
+      margin-bottom: 28px;
+      position: relative;
+    }
+
+    .t-author { display: flex; align-items: center; gap: 14px; }
+
+    .t-avatar {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(255,255,255,.1), rgba(255,255,255,.03));
+      border: 1px solid rgba(255,255,255,.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--g400);
+      flex-shrink: 0;
+    }
+
+    .t-name  { font-size: 14px; font-weight: 500; color: var(--white); }
+    .t-role  { font-size: 12px; color: var(--g600); font-weight: 300; }
+
+    @media (max-width: 1024px) { .test-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 640px)  { .test-grid { grid-template-columns: 1fr; } }
+
+    /* ============================================
+       CONTACT
+    ============================================ */
+    #contact-inner {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    .contact-head {
+      text-align: center;
+      margin-bottom: 72px;
+    }
+    .contact-head .section-title { margin-top: 12px; margin-bottom: 18px; }
+    .contact-head .section-body  { max-width: 540px; margin: 0 auto; text-align: center; }
+
+    .form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .fg { display: flex; flex-direction: column; gap: 7px; }
+    .fg.full { grid-column: 1 / -1; }
+
+    .fg label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--g600);
+    }
+
+    .fg input, .fg textarea {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 12px;
+      padding: 13px 16px;
+      font-size: 15px;
+      font-weight: 300;
+      color: var(--white);
+      font-family: inherit;
+      outline: none;
+      transition: border-color .2s, background .2s;
+      -webkit-appearance: none;
+    }
+    .fg input::placeholder, .fg textarea::placeholder { color: var(--g600); }
+    .fg input:focus, .fg textarea:focus {
+      border-color: rgba(255,255,255,.28);
+      background: rgba(255,255,255,.065);
+    }
+    .fg textarea { min-height: 120px; resize: vertical; }
+
+    .submit-btn {
+      grid-column: 1 / -1;
+      width: 100%;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: .02em;
+      border-radius: 100px;
+      background: var(--white);
+      color: var(--black);
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .2s, transform .15s;
+    }
+    .submit-btn:hover { background: var(--g200); transform: scale(1.01); }
+    .submit-btn:disabled { background: rgba(255,255,255,.15); color: var(--white); transform: none; cursor: default; }
+
+    @media (max-width: 640px) {
+      .form { grid-template-columns: 1fr; }
+      .fg.full { grid-column: 1; }
+      .submit-btn { grid-column: 1; }
+    }
+
+    /* ============================================
+       FOOTER
+    ============================================ */
+    footer {
+      padding: 52px 40px;
+      border-top: 1px solid rgba(255,255,255,.06);
+    }
+
+    .foot-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .foot-brand { display: flex; align-items: center; gap: 9px; }
+    .foot-brand-text { font-size: 11px; color: var(--g600); letter-spacing: .12em; font-weight: 300; }
+    .foot-copy { font-size: 12px; color: var(--g600); font-weight: 300; }
+    .foot-links { display: flex; gap: 22px; }
+    .foot-links a { font-size: 12px; color: var(--g600); text-decoration: none; font-weight: 300; transition: color .2s; }
+    .foot-links a:hover { color: var(--white); }
+
+    @media (max-width: 640px) {
+      footer { padding: 40px 20px; }
+      .foot-inner { flex-direction: column; align-items: center; text-align: center; }
+    }
+
+    /* ============================================
+       SCROLL REVEAL ANIMATIONS
+    ============================================ */
+    .reveal {
+      opacity: 0;
+      transform: translateY(48px);
+      filter: blur(4px);
+      transition: opacity 1s cubic-bezier(.16,1,.3,1),
+                  transform 1s cubic-bezier(.16,1,.3,1),
+                  filter 1s cubic-bezier(.16,1,.3,1);
+    }
+    .reveal.in { opacity: 1; transform: translateY(0); filter: blur(0); }
+
+    .reveal-scale {
+      opacity: 0;
+      transform: scale(.88);
+      filter: blur(6px);
+      transition: opacity 1.1s cubic-bezier(.16,1,.3,1),
+                  transform 1.1s cubic-bezier(.16,1,.3,1),
+                  filter 1.1s cubic-bezier(.16,1,.3,1);
+    }
+    .reveal-scale.in { opacity: 1; transform: scale(1); filter: blur(0); }
+
+    .reveal-clip {
+      opacity: 0;
+      clip-path: inset(0 0 100% 0);
+      transition: opacity .9s cubic-bezier(.16,1,.3,1),
+                  clip-path .9s cubic-bezier(.16,1,.3,1);
+    }
+    .reveal-clip.in { opacity: 1; clip-path: inset(0 0 0% 0); }
+
+    .d1 { transition-delay: .1s; }
+    .d2 { transition-delay: .22s; }
+    .d3 { transition-delay: .34s; }
+    .d4 { transition-delay: .46s; }
+    .d5 { transition-delay: .58s; }
+
+    /* ============================================
+       WORD REVEAL (Om oss headline)
+    ============================================ */
+    .word-reveal {
+      display: inline-block;
+      overflow: hidden;
+      vertical-align: bottom;
+      margin-right: .22em;
+    }
+    .word-reveal span {
+      display: inline-block;
+      transform: translateY(105%);
+      opacity: 0;
+      transition: transform 1s cubic-bezier(.16,1,.3,1),
+                  opacity .6s cubic-bezier(.16,1,.3,1);
+    }
+    .word-reveal.in span { transform: translateY(0); opacity: 1; }
+
+    /* ============================================
+       PINNED PROCESS SECTION
+    ============================================ */
+    #process-pin-container { height: 500vh; }
+    #process-sticky {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 0 40px;
+    }
+
+    #process-label {
+      position: absolute;
+      top: 44px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--g600);
+      opacity: 0;
+      transition: opacity .8s;
+      white-space: nowrap;
+      z-index: 2;
+    }
+    #process-label.in { opacity: 1; }
+
+    .process-stage {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 40px;
+      opacity: 0;
+      transform: translateY(60px) scale(.97);
+      transition: opacity .7s cubic-bezier(.16,1,.3,1),
+                  transform .7s cubic-bezier(.16,1,.3,1);
+      pointer-events: none;
+      text-align: center;
+    }
+    .process-stage.active {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+    .process-stage.exit {
+      opacity: 0;
+      transform: translateY(-60px) scale(.97);
+    }
+
+    .ps-num {
+      font-size: clamp(100px, 20vw, 200px);
+      font-weight: 700;
+      letter-spacing: -.05em;
+      line-height: 1;
+      background: linear-gradient(175deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,.06) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .ps-content { position: relative; z-index: 1; max-width: 640px; }
+    .ps-step-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--g600);
+      margin-bottom: 18px;
+    }
+    .ps-title {
+      font-size: clamp(38px, 6vw, 72px);
+      font-weight: 200;
+      letter-spacing: -.03em;
+      line-height: 1.08;
+      background: linear-gradient(175deg, #fff 30%, #666 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 22px;
+    }
+    .ps-body {
+      font-size: clamp(15px, 1.6vw, 18px);
+      color: var(--g400);
+      font-weight: 300;
+      line-height: 1.75;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    /* progress dots */
+    .ps-dots {
+      position: absolute;
+      bottom: 44px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      z-index: 2;
+    }
+    .ps-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--g600);
+      transition: background .3s, transform .3s;
+    }
+    .ps-dot.active { background: var(--white); transform: scale(1.4); }
+
+    /* ============================================
+       PINNED SERVICES SECTION
+    ============================================ */
+    #services-pin-container { height: 400vh; }
+    #services-sticky {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .svc-stage {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 60px;
+      opacity: 0;
+      transition: opacity .6s cubic-bezier(.16,1,.3,1);
+      pointer-events: none;
+    }
+    .svc-stage.active { opacity: 1; pointer-events: auto; }
+
+    .svc-left { padding-right: 60px; }
+    .svc-index {
+      font-size: 11px; font-weight: 500; letter-spacing: .2em;
+      text-transform: uppercase; color: var(--g600); margin-bottom: 12px;
+    }
+    .svc-heading {
+      font-size: clamp(36px, 5.5vw, 66px);
+      font-weight: 200;
+      letter-spacing: -.025em;
+      line-height: 1.08;
+      background: linear-gradient(175deg, #fff 30%, #666 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 22px;
+    }
+    .svc-body {
+      font-size: clamp(15px, 1.5vw, 17px);
+      color: var(--g400);
+      font-weight: 300;
+      line-height: 1.8;
+    }
+    .svc-right {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .svc-icon-wrap {
+      width: clamp(200px, 28vw, 340px);
+      height: clamp(200px, 28vw, 340px);
+      background: transparent;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: visible;
+      transform: scale(.85) rotate(-4deg);
+      transition: transform .9s cubic-bezier(.16,1,.3,1);
+    }
+    .svc-stage.active .svc-icon-wrap {
+      transform: scale(1) rotate(0deg);
+    }
+    .svc-icon-wrap svg {
+      width: 38%;
+      height: 38%;
+      position: relative;
+      z-index: 2;
+    }
+    /* Icons in black */
+    .svc-icon-wrap svg [stroke] { stroke: #000000 !important; }
+    .svc-icon-wrap svg [fill]:not([fill="none"]) { fill: #000000 !important; }
+
+    /* Single morphing blob — white stroke only */
+    .svc-bubble {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 60% 40% 55% 45% / 50% 60% 40% 50%;
+      background: transparent;
+      background: #ffffff;
+      border: 2px solid #ffffff;
+      pointer-events: none;
+      z-index: 1;
+      animation: blobMorph 7s ease-in-out infinite;
+    }
+    .svc-bubble:nth-child(2),
+    .svc-bubble:nth-child(3) { display: none; }
+
+    @keyframes blobMorph {
+      0%   { border-radius: 60% 40% 55% 45% / 50% 60% 40% 50%; transform: rotate(0deg); }
+      20%  { border-radius: 40% 60% 45% 55% / 60% 40% 55% 45%; transform: rotate(20deg); }
+      40%  { border-radius: 55% 45% 60% 40% / 45% 55% 50% 50%; transform: rotate(-10deg); }
+      60%  { border-radius: 45% 55% 40% 60% / 55% 45% 60% 40%; transform: rotate(15deg); }
+      80%  { border-radius: 50% 50% 55% 45% / 40% 60% 45% 55%; transform: rotate(-5deg); }
+      100% { border-radius: 60% 40% 55% 45% / 50% 60% 40% 50%; transform: rotate(0deg); }
+    }
+
+    /* svc progress bar */
+    .svc-progress {
+      position: absolute;
+      bottom: 0; left: 0;
+      height: 2px;
+      background: rgba(255,255,255,.08);
+      width: 100%;
+    }
+    .svc-progress-bar {
+      height: 100%;
+      background: var(--white);
+      width: 0%;
+      transition: width .05s linear;
+    }
+
+    /* svc nav dots */
+    .svc-dots {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      z-index: 2;
+    }
+    .svc-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--g600);
+      transition: background .3s, transform .3s;
+    }
+    .svc-dot.active { background: var(--white); transform: scale(1.4); }
+
+    /* "Tjänster" section label at top of pinned */
+    .svc-label {
+      position: absolute;
+      top: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--g600);
+    }
+
+    @media (max-width: 768px) {
+      .svc-stage {
+        grid-template-columns: 1fr;
+        padding: 0 24px;
+        text-align: center;
+        grid-template-rows: auto auto;
+        overflow: visible;
+      }
+      .svc-left  { padding-right: 0; }
+      .svc-right {
+        display: flex;
+        justify-content: center;
+        margin-top: 32px;
+      }
+      .svc-icon-wrap {
+        width: 140px;
+        height: 140px;
+      }
+      #process-sticky { padding: 0 20px; }
+    }
+
+    /* ============================================
+       TESTIMONIALS — horizontal scroll strip
+    ============================================ */
+    #testimonials { overflow: hidden; padding: 120px 0; }
+    .test-head { padding: 0 40px; margin-bottom: 64px; }
+    .test-track {
+      display: flex;
+      gap: 22px;
+      padding: 10px 40px 10px;
+      will-change: transform;
+    }
+    .t-card {
+      flex-shrink: 0;
+      width: clamp(300px, 36vw, 460px);
+    }
+
+    @media (max-width: 768px) {
+      #testimonials { padding: 80px 0; }
+      .test-head { padding: 0 20px; }
+      .test-track { padding: 10px 20px; }
+    }
+
+    /* ============================================
+       STAT NUMBER COUNTER ANIMATION
+    ============================================ */
+    .stat-n {
+      transition: none;
+    }
+    .stat { transition: transform .4s cubic-bezier(.16,1,.3,1), border-color .4s; }
+    .stat:hover { transform: translateY(-4px); border-color: rgba(255,255,255,.14); }
+  </style>
+</head>
+<body>
+
+<!-- ============================================================
+     NAVBAR
+============================================================ -->
+<nav id="nav">
+  <a href="#hero" class="nav-brand">
+    <!-- Venn logo mark -->
+    <svg class="nav-logo-svg" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="nav-rg" cx="50%" cy="50%" r="55%" gradientUnits="objectBoundingBox">
+          <stop offset="0%"   stop-color="#909090"/>
+          <stop offset="60%"  stop-color="#d8d8d8"/>
+          <stop offset="100%" stop-color="#ffffff"/>
+        </radialGradient>
+      </defs>
+      <!-- blade pointing up -->
+      <path d="M100,22 C132,34 136,70 120,98 C112,82 88,82 80,98 C64,70 68,34 100,22Z" fill="url(#nav-rg)"/>
+      <!-- blade pointing bottom-right -->
+      <g transform="rotate(120,100,100)">
+        <path d="M100,22 C132,34 136,70 120,98 C112,82 88,82 80,98 C64,70 68,34 100,22Z" fill="url(#nav-rg)"/>
+      </g>
+      <!-- blade pointing bottom-left -->
+      <g transform="rotate(240,100,100)">
+        <path d="M100,22 C132,34 136,70 120,98 C112,82 88,82 80,98 C64,70 68,34 100,22Z" fill="url(#nav-rg)"/>
+      </g>
+    </svg>
+    <div class="nav-wordmark">
+      <span class="nav-triad">TRIAD</span>
+      <span class="nav-sol">SOLUTIONS</span>
+    </div>
+  </a>
+
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#about">Om oss</a></li>
+    <li><a href="#services-pin-container">Tjänster</a></li>
+    <li><a href="#pricing">Priser</a></li>
+    <li><a href="#testimonials">Kundcase</a></li>
+    <li><a href="#contact">Kontakt</a></li>
+    <li>
+      <a href="#contact" class="btn btn-sm btn-white nav-cta">Begär offert</a>
+    </li>
+  </ul>
+
+  <button class="hamburger" id="hamburger" aria-label="Öppna meny">
+    <span id="h1"></span>
+    <span id="h2"></span>
+    <span id="h3"></span>
+  </button>
+</nav>
+
+
+<!-- ============================================================
+     HERO
+============================================================ -->
+<div id="hero-scroll-container">
+  <div id="hero-sticky">
+    <div id="hero-title">
+      <span id="hero-triad">TRIAD</span>
+      <span id="hero-solutions">SOLUTIONS</span>
+    </div>
+
+    <!-- Scroll hint -->
+    <div id="scroll-hint">
+      <span id="scroll-hint-text">Skrolla ner</span>
+      <div id="scroll-hint-arrow">
+        <svg width="18" height="24" viewBox="0 0 18 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <line x1="9" y1="0" x2="9" y2="18" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>
+          <polyline points="2,12 9,20 16,12" fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     OM OSS
+============================================================ -->
+<section id="about" style="padding: 140px 40px; max-width:1200px; margin:0 auto;">
+  <div style="margin-bottom:80px;">
+    <span class="label reveal">Om oss</span>
+    <h2 id="about-headline" style="font-size:clamp(38px,5.5vw,70px);font-weight:200;letter-spacing:-.03em;line-height:1.08;margin-top:12px;"></h2>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start;" id="about-lower">
+    <div>
+      <p class="section-body reveal d1">
+        Triad Solutions är ett svenskt SaaS-bolag med ett enkelt uppdrag: att omvandla era affärsbehov till skräddarsydda digitala lösningar. Vi arbetar nära varje kund — från idé till färdig produkt — och levererar mjukvara som sparar tid, minskar kostnader och skapar konkurrensfördelar.
+      </p>
+      <p class="section-body reveal d2" style="margin-top:22px;">
+        Vi tror inte på generiska lösningar. Varje projekt börjar med ett djupt samtal om er verksamhet, era utmaningar och era mål. Sedan bygger vi exakt det ni behöver — inte mer, inte mindre. Det är därför nio av tio kunder väljer att fortsätta samarbeta med oss efter det första projektet.
+      </p>
+      <p class="section-body reveal d3" style="margin-top:22px;">
+        Vårt team består av erfarna utvecklare, designers och affärsrådgivare som alla delar samma passion: att bygga mjukvara som faktiskt används och skapar värde. Vi kombinerar teknisk spetskompetens med affärsförståelse — det är kombinationen som gör skillnaden.
+      </p>
+    </div>
+    <div class="stats">
+      <div class="stat reveal-scale d1">
+        <div class="stat-n" data-target="50" data-suffix="+">0</div>
+        <div class="stat-l">Levererade projekt</div>
+      </div>
+      <div class="stat reveal-scale d2">
+        <div class="stat-n" data-target="98" data-suffix="%">0</div>
+        <div class="stat-l">Nöjda kunder</div>
+      </div>
+      <div class="stat reveal-scale d3">
+        <div class="stat-n">5 år</div>
+        <div class="stat-l">I branschen</div>
+      </div>
+      <div class="stat reveal-scale d4">
+        <div class="stat-n">24/7</div>
+        <div class="stat-l">Support &amp; drift</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  @media (max-width:1024px) { #about-lower { grid-template-columns:1fr !important; gap:48px !important; } }
+  @media (max-width:768px)  { #about { padding:80px 20px !important; } }
+</style>
+
+<!-- ============================================================
+     VARFÖR VÄLJA OSS
+============================================================ -->
+<section style="padding: 120px 40px; max-width:1200px; margin:0 auto;" id="why">
+  <div style="margin-bottom:72px;">
+    <span class="label reveal">Varför Triad</span>
+    <h2 class="section-title reveal d1" style="margin-top:12px;">Det vi tror på.</h2>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;border:1px solid rgba(255,255,255,.07);border-radius:24px;overflow:hidden;" id="why-grid">
+
+    <div style="padding:44px 36px;background:rgba(255,255,255,.02);border-right:1px solid rgba(255,255,255,.07);" class="reveal d1">
+      <div style="font-size:28px;margin-bottom:20px;">—</div>
+      <h3 style="font-size:18px;font-weight:400;color:#fff;margin-bottom:14px;letter-spacing:-.01em;">Ärlighet framför allt</h3>
+      <p style="font-size:14px;color:var(--g400);line-height:1.8;font-weight:300;">Vi säger ifrån om en idé inte håller. Vi överlevererar aldrig löften och underleverar aldrig resultat. Ni ska alltid veta exakt var projektet befinner sig.</p>
+    </div>
+
+    <div style="padding:44px 36px;background:rgba(255,255,255,.02);border-right:1px solid rgba(255,255,255,.07);" class="reveal d2">
+      <div style="font-size:28px;margin-bottom:20px;">—</div>
+      <h3 style="font-size:18px;font-weight:400;color:#fff;margin-bottom:14px;letter-spacing:-.01em;">Teknik i världsklass</h3>
+      <p style="font-size:14px;color:var(--g400);line-height:1.8;font-weight:300;">Vi väljer alltid rätt verktyg för jobbet — inte det som är trendigt. Modern arkitektur, skalbar kod och säkra system som håller över tid.</p>
+    </div>
+
+    <div style="padding:44px 36px;background:rgba(255,255,255,.02);" class="reveal d3">
+      <div style="font-size:28px;margin-bottom:20px;">—</div>
+      <h3 style="font-size:18px;font-weight:400;color:#fff;margin-bottom:14px;letter-spacing:-.01em;">Långsiktigt partnerskap</h3>
+      <p style="font-size:14px;color:var(--g400);line-height:1.8;font-weight:300;">Vi ser oss som er tekniska partner, inte en leverantör. Det betyder att vi finns kvar efter lansering — för support, vidareutveckling och strategi.</p>
+    </div>
+
+    <div style="padding:44px 36px;background:rgba(255,255,255,.015);border-right:1px solid rgba(255,255,255,.07);border-top:1px solid rgba(255,255,255,.07);" class="reveal d1">
+      <div style="font-size:28px;margin-bottom:20px;">—</div>
+      <h3 style="font-size:18px;font-weight:400;color:#fff;margin-bottom:14px;letter-spacing:-.01em;">Tid och budget</h3>
+      <p style="font-size:14px;color:var(--g400);line-height:1.8;font-weight:300;">Vi levererar i tid och håller budget. Det kräver noggrann planering, tydliga milstolpar och transparens längs hela vägen. Det är vår standard.</p>
+    </div>
+
+    <div style="padding:44px 36px;background:rgba(255,255,255,.015);border-right:1px solid rgba(255,255,255,.07);border-top:1px solid rgba(255,255,255,.07);" class="reveal d2">
+      <div style="font-size:28px;margin-bottom:20px;">—</div>
+      <h3 style="font-size:18px;font-weight:400;color:#fff;margin-bottom:14px;letter-spacing:-.01em;">Säkerhet by design</h3>
+      <p style="font-size:14px;color:var(--g400);line-height:1.8;font-weight:300;">Säkerhet är inte en eftertanke. Från autentisering till datalagring bygger vi säkert från grunden — i enlighet med GDPR och branschstandard.</p>
+    </div>
+
+    <div style="padding:44px 36px;background:rgba(255,255,255,.015);border-top:1px solid rgba(255,255,255,.07);" class="reveal d3">
+      <div style="font-size:28px;margin-bottom:20px;">—</div>
+      <h3 style="font-size:18px;font-weight:400;color:#fff;margin-bottom:14px;letter-spacing:-.01em;">Mätbara resultat</h3>
+      <p style="font-size:14px;color:var(--g400);line-height:1.8;font-weight:300;">Vi sätter upp mätbara mål innan projektet startar och följer upp resultaten efter lansering. Mjukvara ska generera ett konkret affärsvärde.</p>
+    </div>
+
+  </div>
+</section>
+<style>
+  @media (max-width:768px) {
+    #why-grid { grid-template-columns:1fr !important; }
+    #why { padding:80px 20px !important; }
+  }
+  @media (max-width:1024px) {
+    #why-grid { grid-template-columns:1fr 1fr !important; }
+  }
+</style>
+
+
+<!-- ============================================================
+     HUR VI JOBBAR — PINNED
+============================================================ -->
+<div id="process-pin-container">
+  <div id="process-sticky">
+
+    <span id="process-label">Hur vi jobbar</span>
+
+    <!-- Stage 1 -->
+    <div class="process-stage" data-stage="0">
+      <div class="ps-num">01</div>
+      <div class="ps-content">
+        <p class="ps-step-label">Steg ett</p>
+        <h3 class="ps-title">Konsultation</h3>
+        <p class="ps-body">Vi börjar alltid med att lyssna. Genom ett kostnadsfritt inledande möte kartlägger vi era behov, mål, målgrupper och tekniska utmaningar. Vi ställer de svåra frågorna tidigt — för att undvika kostsamma misstag senare. Resultatet är ett tydligt uppdragsdokument som båda parter signerar innan arbetet påbörjas.</p>
+      </div>
+    </div>
+
+    <!-- Stage 2 -->
+    <div class="process-stage" data-stage="1">
+      <div class="ps-num">02</div>
+      <div class="ps-content">
+        <p class="ps-step-label">Steg två</p>
+        <h3 class="ps-title">Design</h3>
+        <p class="ps-body">Innan en enda rad kod skrivs skapar vi klickbara prototyper och användningsflöden. Ni ser exakt hur produkten kommer att fungera och kännas — och kan ge feedback tidigt. Det sparar tid, pengar och frustration. Vi itererar tills ni är nöjda, sedan låser vi designen och börjar bygga.</p>
+      </div>
+    </div>
+
+    <!-- Stage 3 -->
+    <div class="process-stage" data-stage="2">
+      <div class="ps-num">03</div>
+      <div class="ps-content">
+        <p class="ps-step-label">Steg tre</p>
+        <h3 class="ps-title">Utveckling</h3>
+        <p class="ps-body">Vårt team bygger er lösning med modern, vältestad teknik i agila tvåveckorssprint. Ni bjuds in till regelbundna demo-möten där ni ser framstegen i realtid och kan påverka prioriteringarna. Kod granskas av minst två utvecklare, automatiserade tester körs kontinuerligt och säkerhet är inbyggt från dag ett.</p>
+      </div>
+    </div>
+
+    <!-- Stage 4 -->
+    <div class="process-stage" data-stage="3">
+      <div class="ps-num">04</div>
+      <div class="ps-content">
+        <p class="ps-step-label">Steg fyra</p>
+        <h3 class="ps-title">Leverans &amp; support</h3>
+        <p class="ps-body">Vi driftsätter lösningen, utbildar er personal och säkerställer en smidig övergång. Därefter erbjuder vi löpande support, prestandaövervakning och vidareutveckling. Ni får en dedikerad kontaktperson och tillgång till vår supportkanal dygnet runt. Vi betraktar oss som er tekniska avdelning — inte en extern leverantör.</p>
+      </div>
+    </div>
+
+    <!-- Progress dots -->
+    <div class="ps-dots">
+      <div class="ps-dot active" data-i="0"></div>
+      <div class="ps-dot" data-i="1"></div>
+      <div class="ps-dot" data-i="2"></div>
+      <div class="ps-dot" data-i="3"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     TJÄNSTER — PINNED
+============================================================ -->
+<div id="services-pin-container" data-anchor="services" style="scroll-margin-top:58px;">
+  <div id="services-sticky">
+    <span class="svc-label">Tjänster</span>
+
+    <!-- Service 1: Webb -->
+    <div class="svc-stage" data-svc="0">
+      <div class="svc-left">
+        <p class="svc-index">01 / 03</p>
+        <h3 class="svc-heading">Webb&shy;applikationer</h3>
+        <p class="svc-body">Skräddarsydda webblösningar byggda exakt för era arbetsflöden — inte tvärtom. Vi bygger allt från interna verktyg och kundportaler till komplexa SaaS-plattformar med avancerad affärslogik. Snabb laddningstid, hög säkerhet och skalbar arkitektur som växer med er verksamhet.</p>
+        <ul style="margin-top:24px;list-style:none;display:flex;flex-direction:column;gap:10px;">
+          <li style="font-size:13px;color:var(--g600);font-weight:300;display:flex;gap:10px;"><span style="color:var(--g600);">—</span> React, Next.js, Vue eller valfritt ramverk</li>
+          <li style="font-size:13px;color:var(--g600);font-weight:300;display:flex;gap:10px;"><span style="color:var(--g600);">—</span> Skalbar backend med Node.js, Python eller .NET</li>
+          <li style="font-size:13px;color:var(--g600);font-weight:300;display:flex;gap:10px;"><span style="color:var(--g600);">—</span> Molnbaserad infrastruktur med auto-skalning</li>
+          <li style="font-size:13px;color:var(--g600);font-weight:300;display:flex;gap:10px;"><span style="color:var(--g600);">—</span> GDPR-kompatibel datahantering</li>
+        </ul>
+      </div>
+      <div class="svc-right">
+        <div class="svc-icon-wrap"><div class="svc-bubble"></div><div class="svc-bubble"></div><div class="svc-bubble"></div>
+          <svg viewBox="0 0 46 46" fill="none">
+            <rect x="3" y="7" width="40" height="28" rx="4" stroke="rgba(255,255,255,.6)" stroke-width="1.4"/>
+            <line x1="3" y1="15" x2="43" y2="15" stroke="rgba(255,255,255,.3)" stroke-width="1.4"/>
+            <circle cx="8.5" cy="11" r="1.8" fill="rgba(255,255,255,.35)"/>
+            <circle cx="14.5" cy="11" r="1.8" fill="rgba(255,255,255,.35)"/>
+            <line x1="17" y1="42" x2="29" y2="42" stroke="rgba(255,255,255,.3)" stroke-width="1.4"/>
+            <line x1="23" y1="35" x2="23" y2="42" stroke="rgba(255,255,255,.3)" stroke-width="1.4"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Service 2: Mobil -->
+    <div class="svc-stage" data-svc="1">
+      <div class="svc-left">
+        <p class="svc-index">02 / 03</p>
+        <h3 class="svc-heading">Mobilappar</h3>
+        <p class="svc-body">Native och cross-platform appar för iOS och Android som era kunder faktiskt väljer att använda varje dag. Vi designar med användarupplevelsen i fokus — snabba, intuitiva och vackra appar som reflekterar ert varumärke. Från MVP till fullskalig lansering med App Store-publicering inkluderat.</p>
+        <ul style="margin-top:24px;list-style:none;display:flex;flex-direction:column;gap:10px;">
+          <li style="font-size:13px;color:var(--g600);font-weight:300;display:flex;gap:10px;"><span style="color:var(--g600);">—</span> React Native eller Flutter för cross-platform</li>
+          <li style="font-size:13px;color:var(--g600);font-weight:300;display:flex;gap:10px;"><span style="color:var(--g600);">—</span> Swift / Kotlin för native prestanda</li>
+          <li style="font-size:13px;color:var(--g600);font-weight:300;display:flex;gap:10px;"><span style="color:var(--g600);">—</span> Push-notifikationer, offline-läge, biometri</li>
+          <li style="font-size:13px;color:var(--g600);font-weight:300;display:flex;gap:10px;"><span style="color:var(--g600);">—</span> App Store och Google Play-publicering</li>
+        </ul>
+      </div>
+      <div class="svc-right">
+        <div class="svc-icon-wrap"><div class="svc-bubble"></div><div class="svc-bubble"></div><div class="svc-bubble"></div>
+          <svg viewBox="0 0 46 46" fill="none">
+            <rect x="12" y="3" width="22" height="40" rx="5" stroke="rgba(255,255,255,.6)" stroke-width="1.4"/>
+            <line x1="12" y1="11" x2="34" y2="11" stroke="rgba(255,255,255,.3)" stroke-width="1.4"/>
+            <line x1="12" y1="35" x2="34" y2="35" stroke="rgba(255,255,255,.3)" stroke-width="1.4"/>
+            <circle cx="23" cy="39" r="1.6" fill="rgba(255,255,255,.4)"/>
+            <rect x="19" y="6.5" width="8" height="1.4" rx=".7" fill="rgba(255,255,255,.3)"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Service 3: Integrationer -->
+    <div class="svc-stage" data-svc="2">
+      <div class="svc-left">
+        <p class="svc-index">03 / 03</p>
+        <h3 class="svc-heading">System&shy;integrationer</h3>
+        <p class="svc-body">Vi kopplar ihop era befintliga system och verktyg så att data flödar sömlöst — utan manuellt arbete och utan informationssilos. Oavsett om det handlar om ERP, CRM, betalningslösningar eller tredjepartstjänster bygger vi robusta integrationslager som håller.</p>
+        <ul style="margin-top:24px;list-style:none;display:flex;flex-direction:column;gap:10px;">
+          <li style="font-size:13px;color:var(--g600);font-weight:300;display:flex;gap:10px;"><span style="color:var(--g600);">—</span> REST- och GraphQL API-integrationer</li>
+          <li style="font-size:13px;color:var(--g600);font-weight:300;display:flex;gap:10px;"><span style="color:var(--g600);">—</span> Realtidssynkronisering och webhooks</li>
+          <li style="font-size:13px;color:var(--g600);font-weight:300;display:flex;gap:10px;"><span style="color:var(--g600);">—</span> Fortnox, Visma, Salesforce, HubSpot m.fl.</li>
+          <li style="font-size:13px;color:var(--g600);font-weight:300;display:flex;gap:10px;"><span style="color:var(--g600);">—</span> Felhantering, loggning och övervakning</li>
+        </ul>
+      </div>
+      <div class="svc-right">
+        <div class="svc-icon-wrap"><div class="svc-bubble"></div><div class="svc-bubble"></div><div class="svc-bubble"></div>
+          <svg viewBox="0 0 46 46" fill="none">
+            <circle cx="9"  cy="13" r="6" stroke="rgba(255,255,255,.6)" stroke-width="1.4"/>
+            <circle cx="37" cy="13" r="6" stroke="rgba(255,255,255,.6)" stroke-width="1.4"/>
+            <circle cx="23" cy="37" r="6" stroke="rgba(255,255,255,.6)" stroke-width="1.4"/>
+            <line x1="15" y1="13" x2="31" y2="13" stroke="rgba(255,255,255,.3)" stroke-width="1.4"/>
+            <line x1="12" y1="18" x2="20" y2="32" stroke="rgba(255,255,255,.3)" stroke-width="1.4"/>
+            <line x1="34" y1="18" x2="26" y2="32" stroke="rgba(255,255,255,.3)" stroke-width="1.4"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="svc-dots">
+      <div class="svc-dot active" data-i="0"></div>
+      <div class="svc-dot" data-i="1"></div>
+      <div class="svc-dot" data-i="2"></div>
+    </div>
+    <div class="svc-progress"><div class="svc-progress-bar" id="svcBar"></div></div>
+  </div>
+</div>
+
+
+<div class="divider"></div>
+
+
+<!-- ============================================================
+     PRISER
+============================================================ -->
+<section id="pricing" class="section">
+  <div class="pricing-head">
+    <span class="label reveal">Priser</span>
+    <h2 class="section-title reveal d1">Välj det paket<br>som passar er.</h2>
+  </div>
+
+  <div class="pricing-grid">
+
+    <!-- Starter -->
+    <div class="p-card reveal d1">
+      <p class="p-tier">Starter</p>
+      <div class="p-price">49 000 kr</div>
+      <p class="p-from">Engångsavgift från</p>
+      <div class="p-rule"></div>
+      <p class="p-desc">För dig som vill testa en idé eller bygga ett MVP — snabbt och kostnadseffektivt.</p>
+      <ul class="p-feats">
+        <li>MVP-utveckling</li>
+        <li>Upp till 5 kärnfunktioner</li>
+        <li>Responsiv design</li>
+        <li>3 månaders support</li>
+        <li>Grundläggande dokumentation</li>
+      </ul>
+      <a href="#contact" class="btn btn-outline btn-full">Begär offert</a>
+    </div>
+
+    <!-- Growth (featured) -->
+    <div class="p-card featured reveal d2">
+      <div class="p-badge">Mest populär</div>
+      <p class="p-tier">Growth</p>
+      <div class="p-price">149 000 kr</div>
+      <p class="p-from">Engångsavgift från</p>
+      <div class="p-rule"></div>
+      <p class="p-desc">För etablerade bolag som vill digitalisera en kärnprocess och skala sin verksamhet.</p>
+      <ul class="p-feats">
+        <li>Skräddarsydd fullstack-app</li>
+        <li>Obegränsat antal funktioner</li>
+        <li>Systemintegrationer</li>
+        <li>12 månaders support &amp; drift</li>
+        <li>Utbildning av personal</li>
+        <li>SLA-garanti</li>
+      </ul>
+      <a href="#contact" class="btn btn-white btn-full">Begär offert</a>
+    </div>
+
+    <!-- Enterprise -->
+    <div class="p-card reveal d3">
+      <p class="p-tier">Enterprise</p>
+      <div class="p-price">Kontakta oss</div>
+      <p class="p-from">Anpassad prissättning</p>
+      <div class="p-rule"></div>
+      <p class="p-desc">För komplexa lösningar med integrationer, löpande drift och dedikerat utvecklingsteam.</p>
+      <ul class="p-feats">
+        <li>Dedikerat team</li>
+        <li>Komplexa integrationer</li>
+        <li>Löpande drift &amp; förvaltning</li>
+        <li>Prioriterad support dygnet runt</li>
+        <li>Anpassade SLA-avtal</li>
+        <li>Teknisk rådgivning</li>
+      </ul>
+      <a href="#contact" class="btn btn-outline btn-full">Kontakta oss</a>
+    </div>
+
+  </div>
+</section>
+
+
+<div class="divider"></div>
+
+
+<!-- ============================================================
+     TESTIMONIALS
+============================================================ -->
+<section id="testimonials">
+  <div class="test-head">
+    <span class="label reveal">Kundcase</span>
+    <h2 class="section-title reveal d1">Vad våra kunder säger.</h2>
+  </div>
+
+  <div class="test-track" id="testTrack">
+    <div class="t-card reveal d1">
+      <p class="t-text">Triad Solutions levererade exakt det vi behövde — i tid och inom budget. Deras förmåga att förstå vår verksamhet redan från dag ett var imponerande. Vi har sparat hundratals timmar i månaden.</p>
+      <div class="t-author">
+        <div class="t-avatar">AL</div>
+        <div>
+          <div class="t-name">Anna Lindström</div>
+          <div class="t-role">VD, Lindström Logistik AB</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="t-card reveal d2">
+      <p class="t-text">Vi hade försökt lösa vårt problem med standardverktyg i flera år. Triad tog fram en lösning på tre månader som förändrade hur hela vår organisation arbetar. Imponerande kompetens och professionalism.</p>
+      <div class="t-author">
+        <div class="t-avatar">MH</div>
+        <div>
+          <div class="t-name">Marcus Hedström</div>
+          <div class="t-role">CTO, Novacraft Sweden</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="t-card reveal d3">
+      <p class="t-text">Samarbetet med Triad Solutions är en av de bästa affärsbesluten vi tagit. De lyssnar verkligen och bygger det ni faktiskt behöver — inte vad de tror att ni behöver. Rekommenderas varmt.</p>
+      <div class="t-author">
+        <div class="t-avatar">SK</div>
+        <div>
+          <div class="t-name">Sofia Karlsson</div>
+          <div class="t-role">Grundare, Klara Fastigheter AB</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="t-card reveal d4">
+      <p class="t-text">Professionella, snabba och de förstod exakt vad vi behövde. Projektet gick smidigare än vi någonsin hade hoppats och slutresultatet översteg förväntningarna på alla plan.</p>
+      <div class="t-author">
+        <div class="t-avatar">JB</div>
+        <div>
+          <div class="t-name">Johan Bergström</div>
+          <div class="t-role">COO, Bergström &amp; Partners</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<div class="divider"></div>
+
+
+<!-- ============================================================
+     KONTAKT
+============================================================ -->
+<section id="contact" class="section">
+  <div id="contact-inner">
+    <div class="contact-head">
+      <span class="label reveal">Kontakt</span>
+      <h2 class="section-title reveal d1">Redo att ta nästa steg?</h2>
+      <p class="section-body reveal d2">Fyll i formuläret så hör vi av oss inom 24 timmar för ett kostnadsfritt inledande möte.</p>
+    </div>
+
+    <form id="contactForm" novalidate>
+      <div class="form">
+        <div class="fg reveal d1">
+          <label for="fname">Förnamn</label>
+          <input type="text" id="fname" name="fname" placeholder="Erik" required />
+        </div>
+        <div class="fg reveal d2">
+          <label for="lname">Efternamn</label>
+          <input type="text" id="lname" name="lname" placeholder="Svensson" required />
+        </div>
+        <div class="fg reveal d1">
+          <label for="email">E-post</label>
+          <input type="email" id="email" name="email" placeholder="erik@foretaget.se" required />
+        </div>
+        <div class="fg reveal d2">
+          <label for="phone">Telefon</label>
+          <input type="tel" id="phone" name="phone" placeholder="+46 70 000 00 00" />
+        </div>
+        <div class="fg full reveal d3">
+          <label for="company">Företag</label>
+          <input type="text" id="company" name="company" placeholder="Ert företagsnamn" required />
+        </div>
+        <div class="fg full reveal d4">
+          <label for="message">Meddelande</label>
+          <textarea id="message" name="message" placeholder="Berätta kort om er utmaning eller idé..." required></textarea>
+        </div>
+        <button type="submit" class="submit-btn reveal">Begär offert</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+
+<!-- ============================================================
+     FOOTER
+============================================================ -->
+<footer>
+  <div class="foot-inner">
+    <div class="foot-brand">
+      <svg height="22" width="22" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="foot-rg" cx="50%" cy="50%" r="55%" gradientUnits="objectBoundingBox">
+            <stop offset="0%"   stop-color="#333333"/>
+            <stop offset="100%" stop-color="#555555"/>
+          </radialGradient>
+        </defs>
+        <path d="M100,22 C132,34 136,70 120,98 C112,82 88,82 80,98 C64,70 68,34 100,22Z" fill="url(#foot-rg)"/>
+        <g transform="rotate(120,100,100)">
+          <path d="M100,22 C132,34 136,70 120,98 C112,82 88,82 80,98 C64,70 68,34 100,22Z" fill="url(#foot-rg)"/>
+        </g>
+        <g transform="rotate(240,100,100)">
+          <path d="M100,22 C132,34 136,70 120,98 C112,82 88,82 80,98 C64,70 68,34 100,22Z" fill="url(#foot-rg)"/>
+        </g>
+      </svg>
+      <span class="foot-brand-text">TRIAD SOLUTIONS</span>
+    </div>
+    <span class="foot-copy">© 2026 Triad Solutions AB. Alla rättigheter förbehållna.</span>
+    <div class="foot-links">
+      <a href="#">Integritetspolicy</a>
+      <a href="#">Villkor</a>
+      <a href="#contact">Kontakt</a>
+    </div>
+  </div>
+</footer>
+
+
+<!-- ============================================================
+     JAVASCRIPT
+============================================================ -->
+<script>
+  /* ═══════════════════════════════════════════════
+     ELEMENT REFS
+  ═══════════════════════════════════════════════ */
+  const navbar        = document.getElementById('nav');
+  const heroContainer = document.getElementById('hero-scroll-container');
+  const heroSticky    = document.getElementById('hero-sticky');
+  const heroTitle     = document.getElementById('hero-title');
+  const scrollHint    = document.getElementById('scroll-hint');
+  const processPinEl  = document.getElementById('process-pin-container');
+  const servicesPinEl = document.getElementById('services-pin-container');
+  const svcBar        = document.getElementById('svcBar');
+
+  /* ═══════════════════════════════════════════════
+     MAIN SCROLL HANDLER
+  ═══════════════════════════════════════════════ */
+  function onScroll() {
+    const y     = window.scrollY;
+    const heroH = heroContainer.offsetHeight - window.innerHeight;
+    const p     = Math.max(0, Math.min(1, y / heroH));
+
+    // Hero zoom + bg
+    heroTitle.style.transform = `scale(${1 + p * 39})`;
+    const w = Math.round(255 * Math.max(0, 1 - p / 0.55));
+    heroSticky.style.background = `rgb(${w},${w},${w})`;
+
+    // Fade out scroll hint quickly as user starts scrolling
+    scrollHint.style.opacity = Math.max(0, 1 - p * 8);
+
+    // Navbar light/dark
+    if (p < 0.4) {
+      navbar.classList.add('light');
+      navbar.style.background = '';
+    } else {
+      navbar.classList.remove('light');
+      navbar.style.background = 'rgba(0,0,0,.88)';
+    }
+
+    // ── PROCESS pinned stages ──
+    const procH   = processPinEl.offsetHeight - window.innerHeight;
+    const procScr = -processPinEl.getBoundingClientRect().top;
+    const procP   = Math.max(0, Math.min(1, procScr / procH));
+
+    document.getElementById('process-label').classList.toggle('in', procP > 0 && procP < 1);
+
+    const stages     = document.querySelectorAll('.process-stage');
+    const psDots     = document.querySelectorAll('.ps-dot');
+    const stageCount = stages.length;
+    const idx        = Math.min(stageCount - 1, Math.floor(procP * stageCount));
+
+    stages.forEach((s, i) => {
+      s.classList.remove('active', 'exit');
+      if (i === idx)       s.classList.add('active');
+      else if (i < idx)    s.classList.add('exit');
+    });
+    psDots.forEach((d, i) => d.classList.toggle('active', i === idx));
+
+    // ── SERVICES pinned stages ──
+    const svcH   = servicesPinEl.offsetHeight - window.innerHeight;
+    const svcScr = -servicesPinEl.getBoundingClientRect().top;
+    const svcP   = Math.max(0, Math.min(1, svcScr / svcH));
+
+    const svcStages = document.querySelectorAll('.svc-stage');
+    const svcDots   = document.querySelectorAll('.svc-dot');
+    const svcCount  = svcStages.length;
+    const svcIdx    = Math.min(svcCount - 1, Math.floor(svcP * svcCount));
+
+    svcStages.forEach((s, i) => s.classList.toggle('active', i === svcIdx));
+    svcDots.forEach((d, i)   => d.classList.toggle('active', i === svcIdx));
+    svcBar.style.width = (svcP * 100) + '%';
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  /* ═══════════════════════════════════════════════
+     ABOUT HEADLINE — word-by-word reveal
+  ═══════════════════════════════════════════════ */
+  (function buildHeadline() {
+    const words = ['Vi', 'bygger', 'mjukvara', 'som', 'faktiskt', 'gör', 'skillnad.'];
+    const el    = document.getElementById('about-headline');
+    el.style.cssText = 'background:linear-gradient(175deg,#fff 30%,#666 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;';
+    words.forEach((w, i) => {
+      const wrap  = document.createElement('span');
+      wrap.className = 'word-reveal';
+      wrap.style.transitionDelay = (0.07 * i) + 's';
+      const inner = document.createElement('span');
+      inner.textContent = w;
+      wrap.appendChild(inner);
+      el.appendChild(wrap);
+    });
+
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          el.querySelectorAll('.word-reveal').forEach(w => w.classList.add('in'));
+        } else {
+          el.querySelectorAll('.word-reveal').forEach(w => w.classList.remove('in'));
+        }
+      });
+    }, { threshold: 0.3 });
+    obs.observe(el);
+  })();
+
+  /* ═══════════════════════════════════════════════
+     STAT COUNTERS
+  ═══════════════════════════════════════════════ */
+  function animateCounter(el) {
+    const target = parseInt(el.dataset.target);
+    const suffix = el.dataset.suffix || '';
+    const dur    = 1800;
+    const start  = performance.now();
+    function step(now) {
+      const t    = Math.min(1, (now - start) / dur);
+      const ease = 1 - Math.pow(1 - t, 3);
+      el.textContent = Math.round(ease * target) + suffix;
+      if (t < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  /* ═══════════════════════════════════════════════
+     SCROLL REVEAL — IntersectionObserver
+  ═══════════════════════════════════════════════ */
+  const revObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        e.target.querySelectorAll('[data-target]').forEach(animateCounter);
+      } else {
+        e.target.classList.remove('in');
+      }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
+
+  document.querySelectorAll('.reveal, .reveal-scale, .reveal-clip').forEach(el => revObs.observe(el));
+
+  /* ═══════════════════════════════════════════════
+     NAVBAR — hamburger
+  ═══════════════════════════════════════════════ */
+  const navLinks  = document.getElementById('navLinks');
+  const hamburger = document.getElementById('hamburger');
+  const h1 = document.getElementById('h1');
+  const h2 = document.getElementById('h2');
+  const h3 = document.getElementById('h3');
+  let menuOpen = false;
+
+  hamburger.addEventListener('click', () => {
+    menuOpen = !menuOpen;
+    navLinks.classList.toggle('open', menuOpen);
+    if (menuOpen) {
+      h1.style.cssText = 'transform:rotate(45deg) translateY(9px)';
+      h2.style.cssText = 'opacity:0';
+      h3.style.cssText = 'transform:rotate(-45deg) translateY(-9px)';
+    } else {
+      h1.style.cssText = h2.style.cssText = h3.style.cssText = '';
+    }
+  });
+  navLinks.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      menuOpen = false;
+      navLinks.classList.remove('open');
+      h1.style.cssText = h2.style.cssText = h3.style.cssText = '';
+    });
+  });
+
+  /* ═══════════════════════════════════════════════
+     SMOOTH SCROLL
+  ═══════════════════════════════════════════════ */
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', function(e) {
+      const id = this.getAttribute('href');
+      if (id === '#') return;
+      const target = document.querySelector(id);
+      if (!target) return;
+      e.preventDefault();
+      window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - 58, behavior: 'smooth' });
+    });
+  });
+
+  /* ═══════════════════════════════════════════════
+     CONTACT FORM
+  ═══════════════════════════════════════════════ */
+  document.getElementById('contactForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const btn = this.querySelector('.submit-btn');
+    btn.textContent = 'Skickat! Vi återkommer inom 24 h.';
+    btn.disabled = true;
+  });
+</script>
+
+</body>
+</html>
