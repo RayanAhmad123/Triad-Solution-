@@ -2,7 +2,7 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#ffffff" id="meta-theme">
   <title>Triad Solutions — Skräddarsydd mjukvara för SMB</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1836,6 +1836,8 @@
     const bgColor = `rgb(${w},${w},${w})`;
     heroSticky.style.background = bgColor;
     document.getElementById('meta-theme').setAttribute('content', bgColor);
+    document.documentElement.style.background = bgColor;
+    document.body.style.background = bgColor;
 
     // Fade out scroll hint quickly as user starts scrolling
     scrollHint.style.opacity = Math.max(0, 1 - p * 8);
