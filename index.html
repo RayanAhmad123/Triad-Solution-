@@ -924,15 +924,13 @@
     .ps-dot.active::after {
       content: '';
       position: absolute;
-      inset: 0 100% 0 0;
+      inset: 0;
       background: #fff;
       border-radius: 100px;
-      transition: right .05s linear;
+      transform: scaleX(var(--fill-scale, 0));
+      transform-origin: left center;
+      will-change: transform;
     }
-    .ps-dot.active[style] { }
-    /* fill controlled via JS with --fill custom prop */
-    .ps-dot.active { --fill: 0%; }
-    .ps-dot.active::after { right: calc(100% - var(--fill, 0%)); }
 
     /* ============================================
        PINNED SERVICES SECTION
@@ -1067,13 +1065,13 @@
     .svc-dot.active::after {
       content: '';
       position: absolute;
-      inset: 0 100% 0 0;
+      inset: 0;
       background: #fff;
       border-radius: 100px;
-      transition: right .05s linear;
+      transform: scaleX(var(--fill-scale, 0));
+      transform-origin: left center;
+      will-change: transform;
     }
-    .svc-dot.active { --fill: 0%; }
-    .svc-dot.active::after { right: calc(100% - var(--fill, 0%)); }
 
     /* "Tjänster" section label at top of pinned */
     .svc-label {
@@ -1887,8 +1885,8 @@
     psDots.forEach((d, i) => {
       d.classList.toggle('active', i === idx);
       if (i === idx) {
-        const fill = ((procP * stageCount) - idx) * 100;
-        d.style.setProperty('--fill', fill.toFixed(1) + '%');
+        const fill = (procP * stageCount) - idx;
+        d.style.setProperty('--fill-scale', fill.toFixed(4));
       }
     });
 
@@ -1906,13 +1904,19 @@
     svcDots.forEach((d, i) => {
       d.classList.toggle('active', i === svcIdx);
       if (i === svcIdx) {
-        const fill = ((svcP * svcCount) - svcIdx) * 100;
-        d.style.setProperty('--fill', fill.toFixed(1) + '%');
+        const fill = (svcP * svcCount) - svcIdx;
+        d.style.setProperty('--fill-scale', fill.toFixed(4));
       }
     });
   }
 
-  window.addEventListener('scroll', onScroll, { passive: true });
+  let rafPending = false;
+  function onScrollRaf() {
+    if (rafPending) return;
+    rafPending = true;
+    requestAnimationFrame(() => { rafPending = false; onScroll(); });
+  }
+  window.addEventListener('scroll', onScrollRaf, { passive: true });
   onScroll();
 
   /* ═══════════════════════════════════════════════
