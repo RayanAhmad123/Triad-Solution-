@@ -28,7 +28,7 @@
     html { scroll-behavior: smooth; background: #ffffff; }
 
     body {
-      background: var(--black);
+      background: #ffffff;
       color: var(--white);
       font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
       line-height: 1.6;
@@ -1836,8 +1836,8 @@
     const bgColor = `rgb(${w},${w},${w})`;
     heroSticky.style.background = bgColor;
     document.getElementById('meta-theme').setAttribute('content', bgColor);
-    // html background covers iOS safe areas (top/bottom), body stays black for page sections
     document.documentElement.style.background = bgColor;
+    document.body.style.background = bgColor;
 
     // Fade out scroll hint quickly as user starts scrolling
     scrollHint.style.opacity = Math.max(0, 1 - p * 8);
