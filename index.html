@@ -485,92 +485,6 @@
     @media (max-width: 640px)  { .services-grid { grid-template-columns: 1fr; } }
 
     /* ============================================
-       PRICING
-    ============================================ */
-    .pricing-head { margin-bottom: 72px; }
-    .pricing-head .section-title { margin-top: 12px; }
-
-    .pricing-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 22px;
-      align-items: start;
-    }
-
-    .p-card {
-      padding: 44px 38px;
-      border: 1px solid rgba(255,255,255,.07);
-      border-radius: 24px;
-      background: rgba(255,255,255,.02);
-      position: relative;
-      transition: transform .3s;
-    }
-    .p-card:hover { transform: translateY(-4px); }
-
-    .p-card.featured {
-      border-color: rgba(255,255,255,.18);
-      background: rgba(255,255,255,.05);
-    }
-
-    .p-badge {
-      position: absolute;
-      top: -13px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--white);
-      color: var(--black);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      padding: 4px 16px;
-      border-radius: 100px;
-      white-space: nowrap;
-    }
-
-    .p-tier {
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: .2em;
-      text-transform: uppercase;
-      color: var(--g600);
-      margin-bottom: 14px;
-    }
-
-    .p-price {
-      font-size: clamp(26px, 3vw, 38px);
-      font-weight: 200;
-      color: var(--white);
-      letter-spacing: -.02em;
-      line-height: 1;
-      margin-bottom: 6px;
-    }
-
-    .p-from { font-size: 13px; color: var(--g600); margin-bottom: 28px; }
-
-    .p-rule { height: 1px; background: rgba(255,255,255,.07); margin-bottom: 24px; }
-
-    .p-desc { font-size: 13px; color: var(--g400); line-height: 1.7; font-weight: 300; margin-bottom: 28px; }
-
-    .p-feats {
-      list-style: none;
-      margin-bottom: 36px;
-    }
-    .p-feats li {
-      display: flex;
-      gap: 10px;
-      font-size: 13px;
-      color: var(--g400);
-      font-weight: 300;
-      padding: 8px 0;
-      border-bottom: 1px solid rgba(255,255,255,.04);
-    }
-    .p-feats li::before { content: '—'; color: var(--g600); flex-shrink: 0; }
-
-    @media (max-width: 1024px) { .pricing-grid { grid-template-columns: 1fr 1fr; } }
-    @media (max-width: 640px)  { .pricing-grid { grid-template-columns: 1fr; } }
-
-    /* ============================================
        TESTIMONIALS
     ============================================ */
     .test-head { margin-bottom: 72px; }
@@ -1066,7 +980,6 @@
   <ul class="nav-links" id="navLinks">
     <li><a href="#about">Om oss</a></li>
     <li><a href="#services-pin-container">Tjänster</a></li>
-    <li><a href="#pricing">Priser</a></li>
     <li><a href="#testimonials">Kundcase</a></li>
     <li><a href="#contact">Kontakt</a></li>
     <li>
@@ -1367,78 +1280,6 @@
     </div>
   </section>
 </div>
-
-
-<div class="divider"></div>
-
-
-<!-- ============================================================
-     PRISER
-============================================================ -->
-<section id="pricing" class="section">
-  <div class="pricing-head">
-    <span class="label reveal">Priser</span>
-    <h2 class="section-title reveal d1">Välj det paket<br>som passar er.</h2>
-  </div>
-
-  <div class="pricing-grid">
-
-    <!-- Starter -->
-    <div class="p-card reveal d1">
-      <p class="p-tier">Starter</p>
-      <div class="p-price">49 000 kr</div>
-      <p class="p-from">Engångsavgift från</p>
-      <div class="p-rule"></div>
-      <p class="p-desc">För dig som vill testa en idé eller bygga ett MVP — snabbt och kostnadseffektivt.</p>
-      <ul class="p-feats">
-        <li>MVP-utveckling</li>
-        <li>Upp till 5 kärnfunktioner</li>
-        <li>Responsiv design</li>
-        <li>3 månaders support</li>
-        <li>Grundläggande dokumentation</li>
-      </ul>
-      <a href="#contact" class="btn btn-outline btn-full">Begär offert</a>
-    </div>
-
-    <!-- Growth (featured) -->
-    <div class="p-card featured reveal d2">
-      <div class="p-badge">Mest populär</div>
-      <p class="p-tier">Growth</p>
-      <div class="p-price">149 000 kr</div>
-      <p class="p-from">Engångsavgift från</p>
-      <div class="p-rule"></div>
-      <p class="p-desc">För etablerade bolag som vill digitalisera en kärnprocess och skala sin verksamhet.</p>
-      <ul class="p-feats">
-        <li>Skräddarsydd fullstack-app</li>
-        <li>Obegränsat antal funktioner</li>
-        <li>Systemintegrationer</li>
-        <li>12 månaders support &amp; drift</li>
-        <li>Utbildning av personal</li>
-        <li>SLA-garanti</li>
-      </ul>
-      <a href="#contact" class="btn btn-white btn-full">Begär offert</a>
-    </div>
-
-    <!-- Enterprise -->
-    <div class="p-card reveal d3">
-      <p class="p-tier">Enterprise</p>
-      <div class="p-price">Kontakta oss</div>
-      <p class="p-from">Anpassad prissättning</p>
-      <div class="p-rule"></div>
-      <p class="p-desc">För komplexa lösningar med integrationer, löpande drift och dedikerat utvecklingsteam.</p>
-      <ul class="p-feats">
-        <li>Dedikerat team</li>
-        <li>Komplexa integrationer</li>
-        <li>Löpande drift &amp; förvaltning</li>
-        <li>Prioriterad support dygnet runt</li>
-        <li>Anpassade SLA-avtal</li>
-        <li>Teknisk rådgivning</li>
-      </ul>
-      <a href="#contact" class="btn btn-outline btn-full">Kontakta oss</a>
-    </div>
-
-  </div>
-</section>
 
 
 <div class="divider"></div>
