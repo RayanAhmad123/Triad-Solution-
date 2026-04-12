@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#ffffff" id="meta-theme">
+  <meta name="theme-color" content="#00b4a8" id="meta-theme">
   <title>Triad Solutions — Skräddarsydd mjukvara för SMB</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,10 +25,10 @@
       --g900:    #111111;
     }
 
-    html { scroll-behavior: smooth; background: #ffffff; }
+    html { scroll-behavior: smooth; background: #0a2540; }
 
     body {
-      background: #ffffff;
+      background: #0a2540;
       color: var(--white);
       font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
       line-height: 1.6;
@@ -129,10 +129,8 @@
       align-items: center;
       justify-content: space-between;
       padding: 0 40px;
-      background: rgba(0,0,0,.72);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border-bottom: 1px solid rgba(255,255,255,.06);
+      background: transparent;
+      border-bottom: none;
       transition: background .3s;
     }
 
@@ -239,12 +237,99 @@
       position: sticky;
       top: 0;
       height: 100vh;
-      background: #ffffff;
+      background: #061a2e;
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      will-change: background-color;
+      will-change: opacity;
+    }
+
+    /* ── Lava-lamp blobs ── */
+    #hero-blobs {
+      position: absolute;
+      inset: -30%;
+      width: 160%;
+      height: 160%;
+      filter: blur(72px) saturate(1.4);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      will-change: transform;
+    }
+    .blob-1 {
+      width: 55vw; height: 55vw;
+      background: radial-gradient(circle, #00b4a8 0%, transparent 70%);
+      top: 10%; left: 5%;
+      opacity: .8;
+      animation: blobMove1 22s ease-in-out infinite;
+    }
+    .blob-2 {
+      width: 45vw; height: 45vw;
+      background: radial-gradient(circle, #087a72 0%, transparent 70%);
+      top: 50%; left: 55%;
+      opacity: .65;
+      animation: blobMove2 28s ease-in-out infinite;
+    }
+    .blob-3 {
+      width: 60vw; height: 60vw;
+      background: radial-gradient(circle, #0d3a6e 0%, transparent 70%);
+      top: 30%; left: 30%;
+      opacity: .55;
+      animation: blobMove3 34s ease-in-out infinite;
+    }
+    .blob-4 {
+      width: 38vw; height: 38vw;
+      background: radial-gradient(circle, #00d4c8 0%, transparent 70%);
+      top: 65%; left: 10%;
+      opacity: .6;
+      animation: blobMove4 19s ease-in-out infinite;
+    }
+    .blob-5 {
+      width: 42vw; height: 42vw;
+      background: radial-gradient(circle, #0e4a7a 0%, transparent 70%);
+      top: 5%; left: 60%;
+      opacity: .5;
+      animation: blobMove5 25s ease-in-out infinite;
+    }
+
+    @keyframes blobMove1 {
+      0%   { transform: translate(0,     0)     scale(1);   }
+      25%  { transform: translate(12vw,  8vh)   scale(1.1); }
+      50%  { transform: translate(6vw,   20vh)  scale(.95); }
+      75%  { transform: translate(-8vw,  10vh)  scale(1.05);}
+      100% { transform: translate(0,     0)     scale(1);   }
+    }
+    @keyframes blobMove2 {
+      0%   { transform: translate(0,     0)     scale(1);   }
+      30%  { transform: translate(-14vw,-10vh)  scale(1.15);}
+      60%  { transform: translate(-6vw,  14vh)  scale(.9);  }
+      80%  { transform: translate(10vw,  6vh)   scale(1.08);}
+      100% { transform: translate(0,     0)     scale(1);   }
+    }
+    @keyframes blobMove3 {
+      0%   { transform: translate(0,     0)     scale(1);   }
+      20%  { transform: translate(-10vw, 12vh)  scale(1.1); }
+      50%  { transform: translate(14vw, -8vh)   scale(.92); }
+      75%  { transform: translate(4vw,   18vh)  scale(1.05);}
+      100% { transform: translate(0,     0)     scale(1);   }
+    }
+    @keyframes blobMove4 {
+      0%   { transform: translate(0,     0)     scale(1);   }
+      35%  { transform: translate(16vw, -12vh)  scale(1.2); }
+      65%  { transform: translate(8vw,   8vh)   scale(.88); }
+      85%  { transform: translate(-6vw, -6vh)   scale(1.1); }
+      100% { transform: translate(0,     0)     scale(1);   }
+    }
+    @keyframes blobMove5 {
+      0%   { transform: translate(0,     0)     scale(1);   }
+      25%  { transform: translate(-12vw, 14vh)  scale(1.1); }
+      55%  { transform: translate(8vw,  -10vh)  scale(.93); }
+      80%  { transform: translate(-4vw, -16vh)  scale(1.06);}
+      100% { transform: translate(0,     0)     scale(1);   }
     }
 
     #hero-title {
@@ -252,31 +337,15 @@
       flex-direction: column;
       align-items: center;
       transform-origin: center center;
-      will-change: transform;
       user-select: none;
       pointer-events: none;
     }
 
-    #hero-triad {
-      font-family: 'Roboto', sans-serif;
-      font-size: clamp(90px, 18vw, 220px);
-      font-weight: 600;
-      letter-spacing: -.03em;
-      text-transform: uppercase;
-      color: #000000;
-      line-height: 0.88;
+    #hero-logo-svg {
+      width: min(88vw, 760px);
+      height: auto;
       display: block;
-    }
-
-    #hero-solutions {
-      font-family: 'Montserrat', sans-serif;
-      font-size: clamp(14px, 2.8vw, 36px);
-      font-weight: 100;
-      letter-spacing: .38em;
-      text-transform: uppercase;
-      color: #000000;
-      display: block;
-      margin-top: .18em;
+      fill: #ffffff;
     }
 
     /* Scroll hint */
@@ -285,6 +354,7 @@
       bottom: 44px;
       left: 50%;
       transform: translateX(-50%);
+      z-index: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -297,7 +367,7 @@
       font-weight: 500;
       letter-spacing: .2em;
       text-transform: uppercase;
-      color: #000;
+      color: rgba(255,255,255,.7);
     }
     #scroll-hint-arrow {
       animation: scrollBounce 1.6s cubic-bezier(.4,0,.2,1) infinite;
@@ -310,8 +380,8 @@
 
     /* navbar light mode (on white hero) */
     #nav.light {
-      background: rgba(255,255,255,.82) !important;
-      border-bottom-color: rgba(0,0,0,.08);
+      background: transparent !important;
+      border-bottom-color: transparent;
     }
     #nav.light .nav-links a { color: #444; }
     #nav.light .nav-links a:hover { color: #000; }
@@ -381,58 +451,6 @@
     }
 
     /* ============================================
-       PROCESS
-    ============================================ */
-    .process-head { margin-bottom: 72px; }
-    .process-head .section-title { margin-top: 12px; }
-
-    .process-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      border: 1px solid rgba(255,255,255,.07);
-      border-radius: 24px;
-      overflow: hidden;
-    }
-
-    .step {
-      padding: 48px 32px;
-      border-right: 1px solid rgba(255,255,255,.07);
-      background: rgba(255,255,255,.015);
-      transition: background .3s;
-    }
-    .step:last-child { border-right: none; }
-    .step:hover { background: rgba(255,255,255,.04); }
-
-    .step-num {
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: .2em;
-      color: var(--g600);
-      margin-bottom: 24px;
-    }
-
-    .step-title {
-      font-size: 18px;
-      font-weight: 400;
-      color: var(--white);
-      letter-spacing: -.01em;
-      margin-bottom: 14px;
-    }
-
-    .step-body { font-size: 14px; color: var(--g400); line-height: 1.75; font-weight: 300; }
-
-    @media (max-width: 1024px) {
-      .process-grid { grid-template-columns: 1fr 1fr; }
-      .step:nth-child(2) { border-right: none; }
-      .step:nth-child(1), .step:nth-child(2) { border-bottom: 1px solid rgba(255,255,255,.07); }
-    }
-    @media (max-width: 640px) {
-      .process-grid { grid-template-columns: 1fr; }
-      .step { border-right: none; border-bottom: 1px solid rgba(255,255,255,.07); }
-      .step:last-child { border-bottom: none; }
-    }
-
-    /* ============================================
        SERVICES
     ============================================ */
     .services-head { margin-bottom: 72px; }
@@ -483,70 +501,6 @@
 
     @media (max-width: 1024px) { .services-grid { grid-template-columns: 1fr 1fr; } }
     @media (max-width: 640px)  { .services-grid { grid-template-columns: 1fr; } }
-
-    /* ============================================
-       TESTIMONIALS
-    ============================================ */
-    .test-head { margin-bottom: 72px; }
-    .test-head .section-title { margin-top: 12px; }
-
-    .test-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 22px;
-    }
-
-    .t-card {
-      padding: 44px 38px;
-      border: 1px solid rgba(255,255,255,.07);
-      border-radius: 24px;
-      background: rgba(255,255,255,.02);
-      position: relative;
-    }
-
-    .t-card::before {
-      content: '\201C';
-      position: absolute;
-      top: 18px; left: 34px;
-      font-size: 90px;
-      font-weight: 200;
-      color: rgba(255,255,255,.05);
-      line-height: 1;
-      font-family: Georgia, serif;
-      pointer-events: none;
-    }
-
-    .t-text {
-      font-size: 15px;
-      color: var(--g200);
-      line-height: 1.8;
-      font-weight: 300;
-      font-style: italic;
-      margin-bottom: 28px;
-      position: relative;
-    }
-
-    .t-author { display: flex; align-items: center; gap: 14px; }
-
-    .t-avatar {
-      width: 42px; height: 42px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, rgba(255,255,255,.1), rgba(255,255,255,.03));
-      border: 1px solid rgba(255,255,255,.1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--g400);
-      flex-shrink: 0;
-    }
-
-    .t-name  { font-size: 14px; font-weight: 500; color: var(--white); }
-    .t-role  { font-size: 12px; color: var(--g600); font-weight: 300; }
-
-    @media (max-width: 1024px) { .test-grid { grid-template-columns: 1fr 1fr; } }
-    @media (max-width: 640px)  { .test-grid { grid-template-columns: 1fr; } }
 
     /* ============================================
        CONTACT
@@ -710,22 +664,191 @@
     .word-reveal.in span { transform: translateY(0); opacity: 1; }
 
     /* ============================================
-       PINNED PROCESS SECTION
+       HUR VI JOBBAR — 3-COLUMN INFOGRAPHIC
     ============================================ */
-    #process-pin-container { height: 500vh; }
-    #process-sticky {
-      position: sticky;
-      top: 0;
-      height: 100vh;
+    #how-we-work {
+      padding: 120px 0;
+      position: relative;
+      overflow: hidden;
+    }
+    /* background radial glow */
+    #how-we-work::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 900px;
+      height: 600px;
+      background: radial-gradient(ellipse at center, rgba(0,180,168,.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hww-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 40px;
+      position: relative;
+    }
+    .hww-head {
+      text-align: center;
+      margin-bottom: 80px;
+    }
+
+    /* ── SPINE + NODE TIMELINE ── */
+    .hww-timeline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      position: relative;
+      padding: 0 60px;
+    }
+    .hww-timeline::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 60px;
+      right: 60px;
+      height: 1px;
+      background: linear-gradient(90deg, #00b4a8, rgba(0,180,168,.3));
+      transform: translateY(-50%);
+    }
+    .hww-node {
+      position: relative;
+      z-index: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
+      gap: 0;
+    }
+    .hww-node-ring {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: #061a2e;
+      border: 2px solid #00b4a8;
+      display: flex;
+      align-items: center;
       justify-content: center;
-      overflow: hidden;
-      padding: 0 40px;
+      box-shadow: 0 0 0 6px rgba(0,180,168,.08), 0 0 24px rgba(0,180,168,.25);
+    }
+    .hww-node-num {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      color: #00b4a8;
+      font-variant-numeric: tabular-nums;
+    }
+    .hww-node-spacer {
+      flex: 1;
+      height: 1px;
     }
 
-    #process-label {
+    /* ── CARDS ── */
+    .hww-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      margin-top: 0;
+    }
+    .hww-col {
+      background: rgba(255,255,255,.02);
+      border: 1px solid rgba(255,255,255,.07);
+      border-top: 2px solid #00b4a8;
+      border-radius: 20px;
+      padding: 36px 32px 40px;
+      position: relative;
+      transition: background .35s, box-shadow .35s;
+    }
+    .hww-col:hover {
+      background: rgba(0,180,168,.04);
+      box-shadow: 0 8px 40px rgba(0,180,168,.08);
+    }
+    .hww-col-head {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .hww-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(0,180,168,.18) 0%, rgba(0,180,168,.06) 100%);
+      border: 1px solid rgba(0,180,168,.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 0 16px rgba(0,180,168,.15);
+    }
+    .hww-col-step {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: #00b4a8;
+      margin-bottom: 4px;
+    }
+    .hww-col-title {
+      font-size: 22px;
+      font-weight: 300;
+      color: var(--white);
+      letter-spacing: -.02em;
+      line-height: 1.15;
+    }
+    .hww-divider {
+      width: 32px;
+      height: 1px;
+      background: linear-gradient(90deg, #00b4a8, transparent);
+      margin-bottom: 20px;
+    }
+    .hww-col-body {
+      font-size: 14px;
+      color: var(--g400);
+      font-weight: 300;
+      line-height: 1.85;
+      margin-bottom: 28px;
+    }
+    .hww-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+    .hww-tags span {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #00b4a8;
+      background: rgba(0,180,168,.1);
+      border: 1px solid rgba(0,180,168,.25);
+      border-radius: 4px;
+      padding: 5px 11px;
+    }
+    @media (max-width: 900px) {
+      .hww-grid { grid-template-columns: 1fr; gap: 16px; }
+      .hww-col { border-radius: 16px; border-top: 2px solid #00b4a8; }
+      .hww-timeline { display: none; }
+      #how-we-work { padding: 80px 0; }
+      .hww-inner { padding: 0 20px; }
+    }
+
+    /* ── WHY / BELIEF — STICKY SCROLL ── */
+    #why-pin-container {
+      height: 750vh;
+      scroll-margin-top: 58px;
+    }
+    #why-sticky {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #why-label {
       position: absolute;
       top: 44px;
       left: 50%;
@@ -739,223 +862,431 @@
       transition: opacity .8s;
       white-space: nowrap;
       z-index: 2;
+      pointer-events: none;
     }
-    #process-label.in { opacity: 1; }
-
-    .process-stage {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
+    #why-label.in { opacity: 1; }
+    #why-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      width: 100%;
+      max-width: 1200px;
+      padding: 0 40px;
+      align-items: center;
+    }
+    #why-left {
       display: flex;
       flex-direction: column;
+      gap: 32px;
+    }
+    #why-progress-track {
+      width: 2px;
+      height: 48px;
+      background: rgba(255,255,255,.1);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-left: 2px;
+    }
+    #why-progress-fill {
+      width: 100%;
+      height: 0%;
+      background: #00b4a8;
+      border-radius: 2px;
+      transition: height .4s cubic-bezier(.16,1,.3,1);
+      will-change: height;
+    }
+    #why-nav { display: flex; flex-direction: column; }
+    .why-nav-item {
+      display: flex;
       align-items: center;
-      justify-content: center;
-      padding: 0 40px;
-      opacity: 0;
-      transform: translateY(60px) scale(.97);
-      transition: opacity .7s cubic-bezier(.16,1,.3,1),
-                  transform .7s cubic-bezier(.16,1,.3,1);
-      pointer-events: none;
-      text-align: center;
+      gap: 14px;
+      padding: 12px 0 12px 16px;
+      background: none;
+      border: none;
+      border-left: 2px solid transparent;
+      cursor: pointer;
+      font-family: inherit;
+      text-align: left;
+      opacity: 0.3;
+      transition: opacity .4s cubic-bezier(.16,1,.3,1), border-color .4s cubic-bezier(.16,1,.3,1);
     }
-    .process-stage.active {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-      pointer-events: auto;
-    }
-    .process-stage.exit {
-      opacity: 0;
-      transform: translateY(-60px) scale(.97);
-    }
-
-    .ps-num {
-      font-size: clamp(100px, 20vw, 200px);
-      font-weight: 700;
-      letter-spacing: -.05em;
-      line-height: 1;
-      background: linear-gradient(175deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,.06) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 0;
-      pointer-events: none;
-    }
-
-    .ps-content { position: relative; z-index: 1; max-width: 640px; }
-    .ps-step-label {
+    .why-nav-item.active { opacity: 1; border-left-color: #00b4a8; }
+    .why-nav-item:hover:not(.active) { opacity: 0.55; }
+    .why-nav-num {
       font-size: 11px;
       font-weight: 500;
       letter-spacing: .2em;
-      text-transform: uppercase;
       color: var(--g600);
-      margin-bottom: 18px;
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
     }
-    .ps-title {
-      font-size: clamp(38px, 6vw, 72px);
-      font-weight: 200;
-      letter-spacing: -.03em;
-      line-height: 1.08;
-      background: linear-gradient(175deg, #fff 30%, #666 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 22px;
-    }
-    .ps-body {
-      font-size: clamp(15px, 1.6vw, 18px);
-      color: var(--g400);
+    .why-nav-title {
+      font-size: 15px;
       font-weight: 300;
-      line-height: 1.75;
-      max-width: 520px;
-      margin: 0 auto;
+      color: var(--white);
+      line-height: 1.4;
     }
-
-    /* progress dots */
-    .ps-dots {
-      position: absolute;
-      bottom: 44px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 8px;
-      z-index: 2;
-    }
-    .ps-dot {
-      width: 6px; height: 6px;
-      border-radius: 100px;
-      background: rgba(255,255,255,.3);
-      transition: width .4s cubic-bezier(.16,1,.3,1), background .3s;
-      overflow: hidden;
-      position: relative;
-    }
-    .ps-dot.active {
-      width: 36px;
-      background: rgba(255,255,255,.25);
-    }
-    .ps-dot.active::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: #fff;
-      border-radius: 100px;
-      transform: scaleX(var(--fill-scale, 0));
-      transform-origin: left center;
-      will-change: transform;
-    }
-
-    /* ============================================
-       SERVICES — COLUMNS
-    ============================================ */
-    #services-pin-container { scroll-margin-top: 58px; }
-    #svc-section { padding: 120px 40px; max-width: 1200px; margin: 0 auto; }
-    #svc-grid {
+    #why-right {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      border: 1px solid rgba(255,255,255,.07);
-      border-radius: 24px;
-      overflow: hidden;
+      grid-template-areas: "panel";
     }
-    .svc-col {
-      padding: 44px 36px 52px;
-      background: rgba(255,255,255,.02);
-      border-right: 1px solid rgba(255,255,255,.07);
+    .why-panel {
+      grid-area: panel;
+      opacity: 0;
+      transform: translateY(36px);
+      transition: opacity .6s cubic-bezier(.16,1,.3,1), transform .6s cubic-bezier(.16,1,.3,1);
+      pointer-events: none;
+      will-change: opacity, transform;
     }
-    .svc-col:last-child { border-right: none; }
-
-    .svc-index {
-      font-size: 11px; font-weight: 500; letter-spacing: .2em;
-      text-transform: uppercase; color: var(--g600); margin-bottom: 12px;
+    .why-panel.exit {
+      opacity: 0;
+      transform: translateY(-36px);
+      transition: opacity .35s cubic-bezier(.16,1,.3,1), transform .35s cubic-bezier(.16,1,.3,1);
     }
-    .svc-heading {
-      font-size: clamp(36px, 5.5vw, 66px);
+    .why-panel.active {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    .why-panel-icon { margin-bottom: 28px; opacity: 0.8; }
+    .why-panel-title {
+      font-size: clamp(28px, 4vw, 52px);
       font-weight: 200;
       letter-spacing: -.025em;
-      line-height: 1.08;
-      background: linear-gradient(175deg, #fff 30%, #666 100%);
+      line-height: 1.1;
+      background: linear-gradient(175deg, #fff 30%, #555 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      margin-bottom: 22px;
+      margin-bottom: 20px;
     }
-    .svc-body {
-      font-size: clamp(15px, 1.5vw, 17px);
+    .why-panel-body {
+      font-size: clamp(15px, 1.4vw, 18px);
       color: var(--g400);
       font-weight: 300;
       line-height: 1.8;
+      max-width: 460px;
     }
-    .svc-icon-wrap {
-      width: 88px;
-      height: 88px;
+    @media (max-width: 768px) {
+      #why-pin-container { height: auto; }
+      #why-sticky {
+        position: relative;
+        height: auto;
+        padding: 80px 20px;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-start;
+      }
+      #why-label, #why-progress-track { display: none; }
+      #why-layout { grid-template-columns: 1fr; gap: 40px; padding: 0; }
+      #why-right { display: flex; flex-direction: column; gap: 40px; }
+      .why-panel, .why-panel.exit {
+        opacity: 1;
+        transform: none;
+        pointer-events: auto;
+      }
+      .why-nav-item { opacity: 1; }
+      .why-nav-item.active { border-left-color: #00b4a8; }
+    }
+    @media (min-width: 769px) and (max-width: 1024px) {
+      #why-layout { gap: 40px; padding: 0 24px; }
+    }
+
+    /* ============================================
+       SERVICES — RAYCAST STYLE
+    ============================================ */
+    #services-pin-container { scroll-margin-top: 58px; background: #061a2e; }
+    #svc-section { padding: 100px 0 0; }
+
+    #svc-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 0 48px;
+      margin-bottom: 48px;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+    #svc-heading-block { max-width: 480px; }
+    #svc-subtitle {
+      font-size: 16px;
+      color: var(--g400);
+      font-weight: 300;
+      line-height: 1.7;
+      margin-top: 16px;
+    }
+    #svc-tabs {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+      align-self: flex-end;
+    }
+    .svc-tab {
+      padding: 8px 18px;
+      border-radius: 100px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: transparent;
+      color: var(--g400);
+      font-size: 13px;
+      font-weight: 400;
+      cursor: pointer;
+      transition: all .2s;
+      font-family: inherit;
+      letter-spacing: -.01em;
+    }
+    .svc-tab:hover { border-color: rgba(255,255,255,.25); color: #fff; }
+    .svc-tab.active {
+      background: rgba(0,180,168,.15);
+      border-color: rgba(0,180,168,.5);
+      color: #00b4a8;
+    }
+    #svc-track-wrap { position: relative; overflow: hidden; }
+    #svc-track {
+      display: flex;
+      gap: 20px;
+      padding: 8px 48px 60px;
+      overflow-x: scroll;
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    #svc-track::-webkit-scrollbar { display: none; }
+    #svc-track-fade {
+      position: absolute;
+      right: 0; top: 0; bottom: 0;
+      width: 140px;
+      background: linear-gradient(to right, transparent, #061a2e);
+      pointer-events: none;
+    }
+    .svc-card {
+      flex: 0 0 320px;
+      min-height: 460px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.025);
+      scroll-snap-align: start;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: border-color .25s, transform .25s;
+    }
+    .svc-card:hover { border-color: rgba(255,255,255,.16); transform: translateY(-2px); }
+    .svc-card.hidden { display: none; }
+    .svc-cat-card {
+      flex: 0 0 280px;
+      min-height: 220px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.025);
+      scroll-snap-align: start;
+      display: flex;
+      flex-direction: column;
+      padding: 28px;
+      gap: 14px;
+      cursor: pointer;
+      transition: border-color .25s, transform .25s, background .25s;
+    }
+    .svc-cat-card:hover {
+      border-color: rgba(0,180,168,.4);
+      background: rgba(0,180,168,.06);
+      transform: translateY(-2px);
+    }
+    .svc-cat-card.hidden { display: none; }
+    .svc-cat-card-top { display: flex; align-items: center; gap: 14px; }
+    .svc-cat-card-count {
+      margin-left: auto;
+      font-size: 11px;
+      color: rgba(0,180,168,.8);
+      background: rgba(0,180,168,.1);
+      border: 1px solid rgba(0,180,168,.2);
+      border-radius: 100px;
+      padding: 3px 10px;
+      white-space: nowrap;
+    }
+    .svc-cat-card-title {
+      font-size: 16px; font-weight: 500;
+      color: #fff; letter-spacing: -.01em;
+    }
+    .svc-cat-card-desc {
+      font-size: 13px; color: var(--g400);
+      font-weight: 300; line-height: 1.65;
+      flex: 1;
+    }
+    .svc-cat-card-cta {
+      font-size: 13px;
+      color: rgba(0,180,168,.7);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    #svc-back {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px;
+      border-radius: 100px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: transparent;
+      color: var(--g400);
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    #svc-back:hover { border-color: rgba(255,255,255,.25); color: #fff; }
+    #svc-back.hidden { display: none; }
+    .svc-card-meta {
+      padding: 28px 28px 0;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .svc-card-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.07);
       display: flex;
       align-items: center;
       justify-content: center;
+      flex-shrink: 0;
+      color: rgba(255,255,255,.8);
+    }
+    .svc-card-icon svg { width: 22px; height: 22px; }
+    .svc-card-name {
+      font-size: 15px; font-weight: 500;
+      color: #fff; letter-spacing: -.01em; margin-bottom: 2px;
+    }
+    .svc-card-arrow { font-size: 14px; color: rgba(255,255,255,.3); }
+    .svc-card-desc {
+      padding: 14px 28px 18px;
+      font-size: 13px; color: var(--g400);
+      font-weight: 300; line-height: 1.65;
+    }
+    .svc-preview {
+      flex: 1;
+      margin: 0 14px 14px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.05);
+      overflow: hidden;
       position: relative;
-      margin-bottom: 32px;
+      min-height: 160px;
     }
-    .svc-icon-wrap svg {
-      width: 44%;
-      height: 44%;
-      position: relative;
-      z-index: 2;
+    /* Web browser mockup */
+    .svc-browser-bar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px;
+      background: rgba(255,255,255,.04);
+      border-bottom: 1px solid rgba(255,255,255,.05);
     }
-
-    /* Morphing blob */
-    .svc-bubble {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      border-radius: 60% 40% 55% 45% / 50% 60% 40% 50%;
-      background: #ffffff;
-      pointer-events: none;
-      z-index: 1;
-      animation: blobMorph 7s ease-in-out infinite;
+    .svc-browser-dots { display: flex; gap: 4px; }
+    .svc-browser-dots span {
+      width: 7px; height: 7px;
+      border-radius: 50%; background: rgba(255,255,255,.12);
     }
-    .svc-bubble:nth-child(2),
-    .svc-bubble:nth-child(3) { display: none; }
-
-    @keyframes blobMorph {
-      0%   { border-radius: 60% 40% 55% 45% / 50% 60% 40% 50%; transform: rotate(0deg); }
-      20%  { border-radius: 40% 60% 45% 55% / 60% 40% 55% 45%; transform: rotate(20deg); }
-      40%  { border-radius: 55% 45% 60% 40% / 45% 55% 50% 50%; transform: rotate(-10deg); }
-      60%  { border-radius: 45% 55% 40% 60% / 55% 45% 60% 40%; transform: rotate(15deg); }
-      80%  { border-radius: 50% 50% 55% 45% / 40% 60% 45% 55%; transform: rotate(-5deg); }
-      100% { border-radius: 60% 40% 55% 45% / 50% 60% 40% 50%; transform: rotate(0deg); }
+    .svc-browser-url { font-size: 10px; color: rgba(255,255,255,.18); font-family: monospace; }
+    .svc-browser-body { display: flex; height: 148px; }
+    .svc-browser-sidebar {
+      width: 54px;
+      background: rgba(255,255,255,.02);
+      border-right: 1px solid rgba(255,255,255,.05);
+      padding: 10px 8px;
+      display: flex; flex-direction: column; gap: 8px;
     }
-
+    .svc-browser-main { flex: 1; padding: 12px; }
+    .svc-mock-bar { border-radius: 4px; background: rgba(255,255,255,.1); }
+    .svc-mock-row { height: 7px; border-radius: 3px; background: rgba(255,255,255,.07); }
+    .svc-mock-row.active { background: rgba(0,180,168,.4); }
+    .svc-mock-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 10px; }
+    .svc-mock-card {
+      height: 44px; border-radius: 6px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.05);
+    }
+    /* Mobile phone mockup */
+    .svc-preview-mobile {
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .svc-phone-frame {
+      width: 108px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 20px; overflow: hidden;
+    }
+    .svc-phone-notch {
+      width: 36px; height: 4px;
+      background: rgba(255,255,255,.1);
+      border-radius: 2px; margin: 8px auto;
+    }
+    .svc-phone-screen { padding: 4px 8px 8px; }
+    .svc-phone-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+    .svc-phone-list { display: flex; flex-direction: column; gap: 9px; }
+    .svc-phone-row { display: flex; align-items: center; gap: 6px; }
+    .svc-phone-avatar { width: 22px; height: 22px; border-radius: 50%; background: rgba(255,255,255,.14); flex-shrink: 0; }
+    .svc-phone-nav { display: flex; justify-content: center; gap: 4px; margin-top: 10px; padding-bottom: 6px; }
+    .svc-phone-nav-dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,.2); }
+    .svc-phone-nav-dot.active { width: 14px; border-radius: 3px; background: #00b4a8; }
+    /* Integration flow mockup */
+    .svc-preview-integration { display: flex; align-items: center; justify-content: center; padding: 16px 20px; }
+    .svc-api-flow { width: 100%; display: flex; flex-direction: column; gap: 6px; }
+    .svc-api-row { display: flex; align-items: center; gap: 0; }
+    .svc-api-pill {
+      display: flex; align-items: center; gap: 7px;
+      padding: 7px 12px 7px 7px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.04);
+      font-size: 11px; color: rgba(255,255,255,.5);
+      flex-shrink: 0; white-space: nowrap;
+    }
+    .svc-api-logo-sm {
+      width: 20px; height: 20px; border-radius: 4px;
+      font-size: 7px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      font-family: monospace;
+    }
+    .svc-api-line {
+      flex: 1; height: 1px; background: rgba(0,180,168,.3); position: relative;
+    }
+    .svc-api-line::after {
+      content: ''; position: absolute; right: 0; top: -3px;
+      border: 4px solid transparent; border-left: 5px solid rgba(0,180,168,.5);
+    }
+    .svc-api-center-node {
+      margin: 0 auto;
+      width: 56px; height: 56px;
+      border-radius: 14px;
+      border: 1px solid rgba(0,180,168,.4);
+      background: rgba(0,180,168,.08);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 4px;
+      font-size: 9px; font-weight: 700; font-family: monospace;
+      color: rgba(0,180,168,.9); letter-spacing: .06em;
+    }
+    .svc-api-pulse-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%; background: #00b4a8;
+      animation: apiPulse 1.8s ease-in-out infinite;
+    }
+    @keyframes apiPulse {
+      0%, 100% { opacity: .4; transform: scale(.8); }
+      50%       { opacity: 1; transform: scale(1); }
+    }
     @media (max-width: 768px) {
-      #svc-grid { grid-template-columns: 1fr !important; }
-      #svc-section { padding: 80px 20px !important; }
-      #process-sticky { padding: 0 20px; }
+      #svc-header { padding: 0 24px; }
+      #svc-track { padding: 8px 24px 48px; }
+      .svc-card { flex: 0 0 280px; }
+      #svc-section { padding: 80px 0 0; }
+
     }
     @media (max-width: 1024px) {
-      #svc-grid { grid-template-columns: 1fr 1fr !important; }
+      #svc-header { padding: 0 32px; }
     }
 
     /* ============================================
        TESTIMONIALS — horizontal scroll strip
     ============================================ */
-    #testimonials { overflow: hidden; padding: 120px 0; }
-    .test-head { padding: 0 40px; margin-bottom: 64px; }
-    .test-track {
-      display: flex;
-      gap: 22px;
-      padding: 10px 40px 10px;
-      will-change: transform;
-    }
-    .t-card {
-      flex-shrink: 0;
-      width: clamp(300px, 36vw, 460px);
-    }
-
-    @media (max-width: 768px) {
-      #testimonials { padding: 80px 0; }
-      .test-head { padding: 0 20px; }
-      .test-track { padding: 10px 20px; }
-    }
-
     /* ============================================
        STAT NUMBER COUNTER ANIMATION
     ============================================ */
@@ -980,7 +1311,6 @@
   <ul class="nav-links" id="navLinks">
     <li><a href="#about">Om oss</a></li>
     <li><a href="#services-pin-container">Tjänster</a></li>
-    <li><a href="#testimonials">Kundcase</a></li>
     <li><a href="#contact">Kontakt</a></li>
     <li>
       <a href="#contact" class="btn btn-sm btn-white nav-cta">Begär offert</a>
@@ -1000,9 +1330,38 @@
 ============================================================ -->
 <div id="hero-scroll-container">
   <div id="hero-sticky">
-    <div id="hero-title">
-      <span id="hero-triad">TR<span id="hero-i">I</span>AD</span>
-      <span id="hero-solutions">SOLUTIONS</span>
+    <!-- Lava-lamp background blobs -->
+    <div id="hero-blobs" aria-hidden="true">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+      <div class="blob blob-3"></div>
+      <div class="blob blob-4"></div>
+      <div class="blob blob-5"></div>
+    </div>
+    <div id="hero-title" style="position:relative;z-index:1;">
+      <svg id="hero-logo-svg" xmlns="http://www.w3.org/2000/svg" viewBox="380 305 1190 465" aria-label="Triad Solutions">
+        <!-- T -->
+        <path d="M632.96,325.47v41.94h-226.72v-41.94h226.72ZM545.6,325.47v281.42h-52.96v-281.42h52.96Z"/>
+        <!-- R -->
+        <path d="M668.14,325.47h102.25c21.39,0,39.75,3.22,55.09,9.66,15.33,6.45,27.12,15.98,35.37,28.61,8.24,12.63,12.37,28.16,12.37,46.58,0,14.56-2.58,27.19-7.73,37.88-5.16,10.7-12.4,19.65-21.74,26.87-9.34,7.22-20.33,12.89-32.95,17.01l-16.62,8.5h-90.26l-.39-41.94h67.46c10.95,0,20.04-1.93,27.25-5.8,7.22-3.87,12.66-9.21,16.33-16.04,3.67-6.83,5.51-14.62,5.51-23.39,0-9.4-1.81-17.56-5.41-24.45-3.61-6.89-9.08-12.21-16.43-15.95-7.34-3.74-16.62-5.61-27.83-5.61h-49.09v239.48h-53.15v-281.42ZM827.02,606.89l-65.14-126.02,56.25-.19,65.91,123.51v2.71h-57.02Z"/>
+        <!-- I — focal point for zoom animation -->
+        <path d="M976.24,325.47v281.42h-53.15v-281.42h53.15Z"/>
+        <rect id="hero-i" x="949.17" y="465.68" width="1" height="1" fill="none"/>
+        <!-- A -->
+        <path d="M1148.84,368.19l-80.21,238.71h-56.25l105.15-281.42h35.95l-4.64,42.72ZM1212.23,502.33v41.94h-150.95v-41.94h150.95ZM1215.91,606.89l-80.6-238.71-4.83-42.72h36.14l105.73,281.42h-56.44Z"/>
+        <!-- D -->
+        <path d="M1354.3,325.47v281.42h-53.15v-281.42h53.15ZM1385.22,606.89h-60.69l.39-41.75h60.31c16.36,0,30.08-3.64,41.17-10.92,11.08-7.28,19.46-17.78,25.13-31.51,5.67-13.72,8.5-30.18,8.5-49.38v-14.5c0-14.82-1.61-27.9-4.83-39.24-3.22-11.34-7.96-20.87-14.21-28.61-6.25-7.73-13.95-13.59-23.1-17.59-9.15-3.99-19.65-5.99-31.51-5.99h-63.01v-41.94h63.01c18.81,0,35.98,3.16,51.51,9.47,15.53,6.32,28.99,15.37,40.4,27.16,11.4,11.79,20.17,25.87,26.29,42.23,6.12,16.37,9.18,34.66,9.18,54.89v14.11c0,20.1-3.06,38.37-9.18,54.8-6.12,16.43-14.88,30.51-26.29,42.23-11.4,11.73-24.97,20.75-40.69,27.06-15.72,6.32-33.18,9.47-52.38,9.47Z"/>
+        <!-- Solutions -->
+        <path d="M675.13,744.72l1.39-1.29c4.36,5.15,13.17,9.21,22.88,9.21,15.06,0,21.79-6.93,21.79-15.45,0-23.28-44.08-9.61-44.08-35.17,0-9.11,6.93-17.43,23.18-17.43,7.43,0,15.06,2.48,20.11,6.34l-1.09,1.58c-5.55-4.06-12.68-6.04-18.92-6.04-14.56,0-21.3,7.03-21.3,15.65,0,23.38,44.08,10,44.08,35.07,0,9.21-7.23,17.33-23.67,17.33-10.1,0-19.71-4.06-24.37-9.81Z"/>
+        <path d="M734.76,719.56c0-20.01,15.25-34.97,35.56-34.97s35.56,14.96,35.56,34.97-15.26,34.97-35.56,34.97-35.56-14.96-35.56-34.97ZM803.9,719.56c0-18.92-14.46-33.08-33.58-33.08s-33.58,14.16-33.58,33.08,14.46,33.08,33.58,33.08,33.58-14.16,33.58-33.08Z"/>
+        <path d="M824.89,684.89h1.98v67.46h41.31v1.88h-43.29v-69.34Z"/>
+        <path d="M880.26,725.21v-40.31h1.98v40.22c0,18.52,9.01,27.54,24.76,27.54s24.76-9.01,24.76-27.54v-40.22h1.98v40.31c0,19.61-10.2,29.32-26.74,29.32s-26.75-9.71-26.75-29.32Z"/>
+        <path d="M970.99,686.77h-25.75v-1.88h53.49v1.88h-25.75v67.46h-1.98v-67.46Z"/>
+        <path d="M1012.3,684.89h1.98v69.34h-1.98v-69.34Z"/>
+        <path d="M1033.3,719.56c0-20.01,15.26-34.97,35.56-34.97s35.56,14.96,35.56,34.97-15.25,34.97-35.56,34.97-35.56-14.96-35.56-34.97ZM1102.44,719.56c0-18.92-14.46-33.08-33.58-33.08s-33.58,14.16-33.58,33.08,14.46,33.08,33.58,33.08,33.58-14.16,33.58-33.08Z"/>
+        <path d="M1177.92,684.89v69.34h-1.68l-50.82-65.67v65.67h-1.98v-69.34h1.68l50.82,65.67v-65.67h1.98Z"/>
+        <path d="M1196.83,744.72l1.39-1.29c4.36,5.15,13.17,9.21,22.88,9.21,15.06,0,21.79-6.93,21.79-15.45,0-23.28-44.08-9.61-44.08-35.17,0-9.11,6.93-17.43,23.18-17.43,7.43,0,15.06,2.48,20.11,6.34l-1.09,1.58c-5.55-4.06-12.68-6.04-18.92-6.04-14.56,0-21.3,7.03-21.3,15.65,0,23.38,44.08,10,44.08,35.07,0,9.21-7.23,17.33-23.67,17.33-10.1,0-19.71-4.06-24.37-9.81Z"/>
+      </svg>
     </div>
 
     <!-- Scroll hint -->
@@ -1010,13 +1369,581 @@
       <span id="scroll-hint-text">Skrolla ner</span>
       <div id="scroll-hint-arrow">
         <svg width="18" height="24" viewBox="0 0 18 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <line x1="9" y1="0" x2="9" y2="18" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>
-          <polyline points="2,12 9,20 16,12" fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="9" y1="0" x2="9" y2="18" stroke="rgba(255,255,255,.7)" stroke-width="1.5" stroke-linecap="round"/>
+          <polyline points="2,12 9,20 16,12" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
     </div>
   </div>
 </div>
+
+
+<!-- ============================================================
+     TJÄNSTER — RAYCAST STYLE
+============================================================ -->
+<div id="services-pin-container" data-anchor="services">
+  <section id="svc-section">
+
+    <div id="svc-header">
+      <div id="svc-heading-block">
+        <span class="label reveal">Tjänster</span>
+        <h2 class="section-title reveal d1" style="margin-top:12px;">Det vi bygger.</h2>
+        <p id="svc-subtitle" class="reveal d2">Skräddarsydda lösningar för din verksamhet — webb, mobil och sömlösa systemintegrationer.</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;">
+        <button id="svc-back" class="hidden">← Tillbaka</button>
+        <div id="svc-tabs">
+          <button class="svc-tab active" data-filter="all">Alla</button>
+          <button class="svc-tab" data-filter="digital">Webb, App & Marknadsföring</button>
+          <button class="svc-tab" data-filter="integration">Integration</button>
+          <button class="svc-tab" data-filter="cyber">Cybersäkerhet</button>
+          <button class="svc-tab" data-filter="forsaljning">Försäljning</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="svc-track-wrap">
+      <div id="svc-track">
+
+        <!-- Category Card: Digital -->
+        <div class="svc-cat-card reveal d1" data-group="digital">
+          <div class="svc-cat-card-top">
+            <div class="svc-card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="4" width="20" height="14" rx="2"/>
+                <line x1="2" y1="9" x2="22" y2="9" stroke-opacity=".5"/>
+                <line x1="9" y1="22" x2="15" y2="22" stroke-opacity=".5"/>
+                <line x1="12" y1="18" x2="12" y2="22" stroke-opacity=".5"/>
+              </svg>
+            </div>
+            <span class="svc-cat-card-title">Webb, App & Marknadsföring</span>
+            <span class="svc-cat-card-count">3 tjänster</span>
+          </div>
+          <p class="svc-cat-card-desc">Webbapplikationer, mobilappar och datadriven marknadsföring — allt för er digitala närvaro och tillväxt.</p>
+          <span class="svc-cat-card-cta">Utforska →</span>
+        </div>
+
+        <!-- Category Card: Integration -->
+        <div class="svc-cat-card reveal d2" data-group="integration">
+          <div class="svc-cat-card-top">
+            <div class="svc-card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="5" cy="7" r="3"/>
+                <circle cx="19" cy="7" r="3"/>
+                <circle cx="12" cy="19" r="3"/>
+                <line x1="8" y1="7" x2="16" y2="7" stroke-opacity=".5"/>
+                <line x1="6.5" y1="9.5" x2="10.5" y2="16.5" stroke-opacity=".5"/>
+                <line x1="17.5" y1="9.5" x2="13.5" y2="16.5" stroke-opacity=".5"/>
+              </svg>
+            </div>
+            <span class="svc-cat-card-title">Integration</span>
+            <span class="svc-cat-card-count">1 tjänst</span>
+          </div>
+          <p class="svc-cat-card-desc">Koppla ihop era befintliga system sömlöst — data flödar automatiskt utan manuellt arbete eller informationssilos.</p>
+          <span class="svc-cat-card-cta">Utforska →</span>
+        </div>
+
+        <!-- Category Card: Cybersäkerhet -->
+        <div class="svc-cat-card reveal d3" data-group="cyber">
+          <div class="svc-cat-card-top">
+            <div class="svc-card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <polyline points="9 12 11 14 15 10" stroke-opacity=".8"/>
+              </svg>
+            </div>
+            <span class="svc-cat-card-title">Cybersäkerhet</span>
+            <span class="svc-cat-card-count">1 tjänst</span>
+          </div>
+          <p class="svc-cat-card-desc">Proaktiv säkerhetsstrategi med penetrationstester, hotanalys och säker arkitektur som håller angripare borta.</p>
+          <span class="svc-cat-card-cta">Utforska →</span>
+        </div>
+
+        <!-- Category Card: Försäljning -->
+        <div class="svc-cat-card reveal d4" data-group="forsaljning">
+          <div class="svc-cat-card-top">
+            <div class="svc-card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="9" cy="21" r="1"/>
+                <circle cx="20" cy="21" r="1"/>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+              </svg>
+            </div>
+            <span class="svc-cat-card-title">Försäljning och handel</span>
+            <span class="svc-cat-card-count">1 tjänst</span>
+          </div>
+          <p class="svc-cat-card-desc">E-handelslösningar, säljautomatisering och CRM-integrationer som ökar konvertering och förenklar säljprocessen.</p>
+          <span class="svc-cat-card-cta">Utforska →</span>
+        </div>
+
+        <!-- Card 1: Webb -->
+        <div class="svc-card svc-subcard reveal d1" data-category="digital">
+          <div class="svc-card-meta">
+            <div class="svc-card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="4" width="20" height="14" rx="2"/>
+                <line x1="2" y1="9" x2="22" y2="9" stroke-opacity=".5"/>
+                <circle cx="5.5" cy="6.5" r="1" fill="currentColor" stroke="none" fill-opacity=".5"/>
+                <circle cx="8.5" cy="6.5" r="1" fill="currentColor" stroke="none" fill-opacity=".5"/>
+                <line x1="9" y1="22" x2="15" y2="22" stroke-opacity=".5"/>
+                <line x1="12" y1="18" x2="12" y2="22" stroke-opacity=".5"/>
+              </svg>
+            </div>
+            <div style="flex:1">
+              <h3 class="svc-card-name">Webbapplikationer</h3>
+              <span class="svc-card-arrow">→</span>
+            </div>
+          </div>
+          <p class="svc-card-desc">Från interna verktyg och kundportaler till komplexa SaaS-plattformar — byggda exakt för era arbetsflöden.</p>
+          <div class="svc-preview">
+            <div class="svc-browser-bar">
+              <div class="svc-browser-dots"><span></span><span></span><span></span></div>
+              <div class="svc-browser-url">dashboard.triad.app</div>
+            </div>
+            <div class="svc-browser-body">
+              <div class="svc-browser-sidebar">
+                <div class="svc-mock-row active"></div>
+                <div class="svc-mock-row"></div>
+                <div class="svc-mock-row"></div>
+                <div class="svc-mock-row"></div>
+                <div class="svc-mock-row"></div>
+              </div>
+              <div class="svc-browser-main">
+                <div class="svc-mock-bar" style="width:55%;height:7px;margin-bottom:10px;"></div>
+                <div class="svc-mock-grid">
+                  <div class="svc-mock-card"></div>
+                  <div class="svc-mock-card"></div>
+                  <div class="svc-mock-card"></div>
+                  <div class="svc-mock-card"></div>
+                </div>
+                <div class="svc-mock-bar" style="width:100%;height:28px;margin-top:8px;border-radius:6px;opacity:.5;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Mobil -->
+        <div class="svc-card svc-subcard reveal d2" data-category="digital">
+          <div class="svc-card-meta">
+            <div class="svc-card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="7" y="2" width="10" height="20" rx="3"/>
+                <line x1="7" y1="6" x2="17" y2="6" stroke-opacity=".5"/>
+                <line x1="7" y1="18" x2="17" y2="18" stroke-opacity=".5"/>
+                <circle cx="12" cy="20" r=".9" fill="currentColor" stroke="none" fill-opacity=".5"/>
+                <rect x="9.5" y="3.5" width="5" height=".9" rx=".45" fill="currentColor" stroke="none" fill-opacity=".4"/>
+              </svg>
+            </div>
+            <div style="flex:1">
+              <h3 class="svc-card-name">Mobilappar</h3>
+              <span class="svc-card-arrow">→</span>
+            </div>
+          </div>
+          <p class="svc-card-desc">Native och cross-platform appar för iOS och Android — snabba, intuitiva och vackra appar era kunder väljer varje dag.</p>
+          <div class="svc-preview svc-preview-mobile">
+            <div class="svc-phone-frame">
+              <div class="svc-phone-notch"></div>
+              <div class="svc-phone-screen">
+                <div class="svc-phone-header">
+                  <div class="svc-mock-bar" style="width:42%;height:6px;"></div>
+                  <div class="svc-mock-bar" style="width:16%;height:6px;"></div>
+                </div>
+                <div class="svc-phone-list">
+                  <div class="svc-phone-row">
+                    <div class="svc-phone-avatar" style="background:rgba(0,180,168,.35)"></div>
+                    <div style="flex:1">
+                      <div class="svc-mock-bar" style="width:68%;height:5px;margin-bottom:5px;"></div>
+                      <div class="svc-mock-bar" style="width:48%;height:4px;opacity:.35;"></div>
+                    </div>
+                  </div>
+                  <div class="svc-phone-row">
+                    <div class="svc-phone-avatar"></div>
+                    <div style="flex:1">
+                      <div class="svc-mock-bar" style="width:55%;height:5px;margin-bottom:5px;"></div>
+                      <div class="svc-mock-bar" style="width:75%;height:4px;opacity:.35;"></div>
+                    </div>
+                  </div>
+                  <div class="svc-phone-row">
+                    <div class="svc-phone-avatar" style="background:rgba(255,255,255,.08)"></div>
+                    <div style="flex:1">
+                      <div class="svc-mock-bar" style="width:60%;height:5px;margin-bottom:5px;"></div>
+                      <div class="svc-mock-bar" style="width:38%;height:4px;opacity:.35;"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="svc-phone-nav">
+                  <div class="svc-phone-nav-dot active"></div>
+                  <div class="svc-phone-nav-dot"></div>
+                  <div class="svc-phone-nav-dot"></div>
+                  <div class="svc-phone-nav-dot"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Integrationer -->
+        <div class="svc-card svc-subcard reveal d3" data-category="integration">
+          <div class="svc-card-meta">
+            <div class="svc-card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="5" cy="7" r="3"/>
+                <circle cx="19" cy="7" r="3"/>
+                <circle cx="12" cy="19" r="3"/>
+                <line x1="8" y1="7" x2="16" y2="7" stroke-opacity=".5"/>
+                <line x1="6.5" y1="9.5" x2="10.5" y2="16.5" stroke-opacity=".5"/>
+                <line x1="17.5" y1="9.5" x2="13.5" y2="16.5" stroke-opacity=".5"/>
+              </svg>
+            </div>
+            <div style="flex:1">
+              <h3 class="svc-card-name">Systemintegrationer</h3>
+              <span class="svc-card-arrow">→</span>
+            </div>
+          </div>
+          <p class="svc-card-desc">Koppla ihop era befintliga system — data flödar sömlöst utan manuellt arbete och informationssilos.</p>
+          <div class="svc-preview svc-preview-integration">
+            <div class="svc-api-flow">
+              <div class="svc-api-row">
+                <div class="svc-api-pill">
+                  <div class="svc-api-logo-sm" style="background:rgba(0,180,168,.15);color:rgba(0,180,168,.8)">FX</div>
+                  Fortnox
+                </div>
+                <div class="svc-api-line"></div>
+              </div>
+              <div style="padding:8px 0;display:flex;justify-content:center;">
+                <div class="svc-api-center-node">
+                  <div class="svc-api-pulse-dot"></div>
+                  API
+                </div>
+              </div>
+              <div class="svc-api-row" style="flex-direction:row-reverse">
+                <div class="svc-api-pill">
+                  <div class="svc-api-logo-sm" style="background:rgba(100,180,255,.15);color:rgba(100,180,255,.8)">HS</div>
+                  HubSpot
+                </div>
+                <div class="svc-api-line" style="transform:scaleX(-1)"></div>
+              </div>
+              <div class="svc-api-row" style="flex-direction:row-reverse">
+                <div class="svc-api-pill">
+                  <div class="svc-api-logo-sm" style="background:rgba(255,160,80,.15);color:rgba(255,160,80,.8)">VS</div>
+                  Visma
+                </div>
+                <div class="svc-api-line" style="transform:scaleX(-1)"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Card 4: Cybersäkerhet -->
+        <div class="svc-card svc-subcard reveal d4" data-category="cyber">
+          <div class="svc-card-meta">
+            <div class="svc-card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <polyline points="9 12 11 14 15 10" stroke-opacity=".8"/>
+              </svg>
+            </div>
+            <div style="flex:1">
+              <h3 class="svc-card-name">Cybersäkerhet</h3>
+              <span class="svc-card-arrow">→</span>
+            </div>
+          </div>
+          <p class="svc-card-desc">Skydda er verksamhet med proaktiv säkerhetsstrategi — penetrationstester, hotanalys och säker arkitektur som håller angripare borta.</p>
+          <div class="svc-preview svc-preview-integration">
+            <div class="svc-api-flow">
+              <div class="svc-api-row">
+                <div class="svc-api-pill">
+                  <div class="svc-api-logo-sm" style="background:rgba(255,80,80,.15);color:rgba(255,80,80,.8)">PT</div>
+                  Pentest
+                </div>
+                <div class="svc-api-line"></div>
+              </div>
+              <div style="padding:8px 0;display:flex;justify-content:center;">
+                <div class="svc-api-center-node">
+                  <div class="svc-api-pulse-dot"></div>
+                  SOC
+                </div>
+              </div>
+              <div class="svc-api-row" style="flex-direction:row-reverse">
+                <div class="svc-api-pill">
+                  <div class="svc-api-logo-sm" style="background:rgba(180,100,255,.15);color:rgba(180,100,255,.8)">FW</div>
+                  Brandvägg
+                </div>
+                <div class="svc-api-line" style="transform:scaleX(-1)"></div>
+              </div>
+              <div class="svc-api-row" style="flex-direction:row-reverse">
+                <div class="svc-api-pill">
+                  <div class="svc-api-logo-sm" style="background:rgba(80,200,120,.15);color:rgba(80,200,120,.8)">MF</div>
+                  MFA
+                </div>
+                <div class="svc-api-line" style="transform:scaleX(-1)"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 5: Marknadsföring och upplevelse -->
+        <div class="svc-card svc-subcard reveal d5" data-category="digital">
+          <div class="svc-card-meta">
+            <div class="svc-card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+              </svg>
+            </div>
+            <div style="flex:1">
+              <h3 class="svc-card-name">Marknadsföring och upplevelse</h3>
+              <span class="svc-card-arrow">→</span>
+            </div>
+          </div>
+          <p class="svc-card-desc">Digitala kampanjer, varumärkesupplevelser och datadriven marknadsföring som skapar verkliga relationer med era kunder.</p>
+          <div class="svc-preview">
+            <div class="svc-browser-bar">
+              <div class="svc-browser-dots"><span></span><span></span><span></span></div>
+              <div class="svc-browser-url">analytics.triad.app</div>
+            </div>
+            <div class="svc-browser-body">
+              <div class="svc-browser-sidebar">
+                <div class="svc-mock-row active"></div>
+                <div class="svc-mock-row"></div>
+                <div class="svc-mock-row"></div>
+                <div class="svc-mock-row"></div>
+              </div>
+              <div class="svc-browser-main">
+                <div class="svc-mock-bar" style="width:65%;height:7px;margin-bottom:10px;"></div>
+                <div class="svc-mock-grid">
+                  <div class="svc-mock-card"></div>
+                  <div class="svc-mock-card"></div>
+                  <div class="svc-mock-card"></div>
+                  <div class="svc-mock-card"></div>
+                </div>
+                <div class="svc-mock-bar" style="width:100%;height:28px;margin-top:8px;border-radius:6px;opacity:.5;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 6: Försäljning och handel -->
+        <div class="svc-card svc-subcard reveal d6" data-category="forsaljning">
+          <div class="svc-card-meta">
+            <div class="svc-card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="9" cy="21" r="1"/>
+                <circle cx="20" cy="21" r="1"/>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+              </svg>
+            </div>
+            <div style="flex:1">
+              <h3 class="svc-card-name">Försäljning och handel</h3>
+              <span class="svc-card-arrow">→</span>
+            </div>
+          </div>
+          <p class="svc-card-desc">E-handelslösningar, säljautomatisering och CRM-integrationer som ökar konvertering och förenklar hela säljprocessen.</p>
+          <div class="svc-preview">
+            <div class="svc-browser-bar">
+              <div class="svc-browser-dots"><span></span><span></span><span></span></div>
+              <div class="svc-browser-url">shop.triad.app</div>
+            </div>
+            <div class="svc-browser-body">
+              <div class="svc-browser-sidebar">
+                <div class="svc-mock-row active"></div>
+                <div class="svc-mock-row"></div>
+                <div class="svc-mock-row"></div>
+                <div class="svc-mock-row"></div>
+              </div>
+              <div class="svc-browser-main">
+                <div class="svc-mock-bar" style="width:50%;height:7px;margin-bottom:10px;"></div>
+                <div class="svc-mock-grid">
+                  <div class="svc-mock-card"></div>
+                  <div class="svc-mock-card"></div>
+                  <div class="svc-mock-card"></div>
+                  <div class="svc-mock-card"></div>
+                </div>
+                <div class="svc-mock-bar" style="width:100%;height:28px;margin-top:8px;border-radius:6px;opacity:.5;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div id="svc-track-fade"></div>
+    </div>
+
+  </section>
+</div>
+
+<!-- ============================================================
+     VARFÖR VÄLJA OSS — STICKY SCROLL
+============================================================ -->
+<div id="why-pin-container">
+  <div id="why-sticky">
+
+    <span id="why-label">Varför Triad</span>
+
+    <div id="why-layout">
+
+      <!-- LEFT: header + progress bar + nav list -->
+      <div id="why-left">
+        <div id="why-header">
+          <span class="label">Varför Triad</span>
+          <h2 class="section-title" style="margin-top:12px;">Det vi<br>tror på.</h2>
+        </div>
+        <div id="why-progress-track">
+          <div id="why-progress-fill"></div>
+        </div>
+        <nav id="why-nav" aria-label="Tro-punkter">
+          <button class="why-nav-item active" data-index="0"><span class="why-nav-num">01</span><span class="why-nav-title">Ärlighet framför allt</span></button>
+          <button class="why-nav-item" data-index="1"><span class="why-nav-num">02</span><span class="why-nav-title">Teknik i världsklass</span></button>
+          <button class="why-nav-item" data-index="2"><span class="why-nav-num">03</span><span class="why-nav-title">Långsiktigt partnerskap</span></button>
+          <button class="why-nav-item" data-index="3"><span class="why-nav-num">04</span><span class="why-nav-title">Tid och budget</span></button>
+          <button class="why-nav-item" data-index="4"><span class="why-nav-num">05</span><span class="why-nav-title">Säkerhet by design</span></button>
+          <button class="why-nav-item" data-index="5"><span class="why-nav-num">06</span><span class="why-nav-title">Mätbara resultat</span></button>
+        </nav>
+      </div>
+
+      <!-- RIGHT: stacked panels, only .active shown -->
+      <div id="why-right">
+        <div class="why-panel active" data-panel="0">
+          <div class="why-panel-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 21h14"/><path d="M5 9 2 15h6L5 9z"/><path d="M19 9l-3 6h6L19 9z"/><line x1="5" y1="9" x2="19" y2="9"/></svg></div>
+          <h3 class="why-panel-title">Ärlighet framför allt</h3>
+          <p class="why-panel-body">Vi säger ifrån om en idé inte håller. Vi överlevererar aldrig löften och underleverar aldrig resultat. Ni ska alltid veta exakt var projektet befinner sig.</p>
+        </div>
+        <div class="why-panel" data-panel="1">
+          <div class="why-panel-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
+          <h3 class="why-panel-title">Teknik i världsklass</h3>
+          <p class="why-panel-body">Vi väljer alltid rätt verktyg för jobbet — inte det som är trendigt. Modern arkitektur, skalbar kod och säkra system som håller över tid.</p>
+        </div>
+        <div class="why-panel" data-panel="2">
+          <div class="why-panel-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <h3 class="why-panel-title">Långsiktigt partnerskap</h3>
+          <p class="why-panel-body">Vi ser oss som er tekniska partner, inte en leverantör. Det betyder att vi finns kvar efter lansering — för support, vidareutveckling och strategi.</p>
+        </div>
+        <div class="why-panel" data-panel="3">
+          <div class="why-panel-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+          <h3 class="why-panel-title">Tid och budget</h3>
+          <p class="why-panel-body">Vi levererar i tid och håller budget. Det kräver noggrann planering, tydliga milstolpar och transparens längs hela vägen. Det är vår standard.</p>
+        </div>
+        <div class="why-panel" data-panel="4">
+          <div class="why-panel-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+          <h3 class="why-panel-title">Säkerhet by design</h3>
+          <p class="why-panel-body">Säkerhet är inte en eftertanke. Från autentisering till datalagring bygger vi säkert från grunden — i enlighet med GDPR och branschstandard.</p>
+        </div>
+        <div class="why-panel" data-panel="5">
+          <div class="why-panel-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg></div>
+          <h3 class="why-panel-title">Mätbara resultat</h3>
+          <p class="why-panel-body">Vi sätter upp mätbara mål innan projektet startar och följer upp resultaten efter lansering. Mjukvara ska generera ett konkret affärsvärde.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     HUR VI JOBBAR — 3-COLUMN INFOGRAPHIC
+============================================================ -->
+<section id="how-we-work">
+  <div class="hww-inner">
+
+    <div class="hww-head">
+      <span class="label reveal d1">Hur vi jobbar</span>
+      <h2 class="section-title reveal d2" style="margin-top:12px;">En process byggd<br>för resultat.</h2>
+    </div>
+
+    <!-- Spine with numbered nodes -->
+    <div class="hww-timeline reveal d3" aria-hidden="true">
+      <div class="hww-node">
+        <div class="hww-node-ring"><span class="hww-node-num">01</span></div>
+      </div>
+      <div class="hww-node">
+        <div class="hww-node-ring"><span class="hww-node-num">02</span></div>
+      </div>
+      <div class="hww-node">
+        <div class="hww-node-ring"><span class="hww-node-num">03</span></div>
+      </div>
+    </div>
+
+    <!-- Cards sit flush below the spine -->
+    <div class="hww-grid">
+
+      <!-- Card 1 — Konsultation -->
+      <div class="hww-col reveal d1">
+        <div class="hww-col-head">
+          <div class="hww-icon">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <path d="M11 2a7 7 0 0 1 7 7c0 3.5-2.5 5.5-3.5 7H7.5C6.5 14.5 4 12.5 4 9a7 7 0 0 1 7-7Z" stroke="#00b4a8" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M8.5 20h5" stroke="#00b4a8" stroke-width="1.4" stroke-linecap="round"/>
+              <path d="M8.5 17h5" stroke="#00b4a8" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div>
+            <p class="hww-col-step">Steg ett</p>
+            <h3 class="hww-col-title">Konsultation</h3>
+          </div>
+        </div>
+        <div class="hww-divider"></div>
+        <p class="hww-col-body">Vi börjar alltid med att lyssna. Genom ett kostnadsfritt inledande möte kartlägger vi era behov, mål och tekniska utmaningar — och levererar ett tydligt uppdragsdokument innan arbetet påbörjas.</p>
+        <div class="hww-tags">
+          <span>Behovsanalys</span>
+          <span>Kostnadsfritt möte</span>
+          <span>Uppdragsdokument</span>
+        </div>
+      </div>
+
+      <!-- Card 2 — Design & Utveckling -->
+      <div class="hww-col reveal d2">
+        <div class="hww-col-head">
+          <div class="hww-icon">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <rect x="2" y="4" width="18" height="12" rx="2" stroke="#00b4a8" stroke-width="1.4"/>
+              <path d="M7 20h8M11 16v4" stroke="#00b4a8" stroke-width="1.4" stroke-linecap="round"/>
+              <path d="M6 8l3 3-3 3M12 14h4" stroke="#00b4a8" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div>
+            <p class="hww-col-step">Steg två</p>
+            <h3 class="hww-col-title">Design & Utveckling</h3>
+          </div>
+        </div>
+        <div class="hww-divider"></div>
+        <p class="hww-col-body">Klickbara prototyper skapas innan en enda rad kod skrivs. Sedan bygger vi i agila tvåveckorssprint med regelbundna demos, kodgranskning av minst två utvecklare och säkerhet inbyggt från dag ett.</p>
+        <div class="hww-tags">
+          <span>Prototyp</span>
+          <span>Agil sprint</span>
+          <span>Kodgranskning</span>
+        </div>
+      </div>
+
+      <!-- Card 3 — Leverans & Support -->
+      <div class="hww-col reveal d3">
+        <div class="hww-col-head">
+          <div class="hww-icon">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <circle cx="11" cy="11" r="9" stroke="#00b4a8" stroke-width="1.4"/>
+              <path d="M7 11l3 3 5-5" stroke="#00b4a8" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div>
+            <p class="hww-col-step">Steg tre</p>
+            <h3 class="hww-col-title">Leverans & Support</h3>
+          </div>
+        </div>
+        <div class="hww-divider"></div>
+        <p class="hww-col-body">Vi driftsätter lösningen, utbildar er personal och säkerställer en smidig övergång. Därefter erbjuder vi löpande support och prestandaövervakning — vi är er tekniska avdelning, inte en extern leverantör.</p>
+        <div class="hww-tags">
+          <span>Driftsättning</span>
+          <span>Utbildning</span>
+          <span>24/7 Support</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<div class="divider"></div>
 
 
 <!-- ============================================================
@@ -1065,283 +1992,6 @@
   @media (max-width:768px)  { #about { padding:80px 20px !important; } }
 </style>
 
-<!-- ============================================================
-     VARFÖR VÄLJA OSS
-============================================================ -->
-<section style="padding: 120px 40px; max-width:1200px; margin:0 auto;" id="why">
-  <div style="margin-bottom:72px;">
-    <span class="label reveal">Varför Triad</span>
-    <h2 class="section-title reveal d1" style="margin-top:12px;">Det vi tror på.</h2>
-  </div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;border:1px solid rgba(255,255,255,.07);border-radius:24px;overflow:hidden;" id="why-grid">
-
-    <div style="padding:44px 36px;background:rgba(255,255,255,.02);border-right:1px solid rgba(255,255,255,.07);" class="reveal d1">
-      <div style="margin-bottom:24px;">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 21h14"/><path d="M5 9 2 15h6L5 9z"/><path d="M19 9l-3 6h6L19 9z"/><line x1="5" y1="9" x2="19" y2="9"/></svg>
-      </div>
-      <h3 style="font-size:18px;font-weight:400;color:#fff;margin-bottom:14px;letter-spacing:-.01em;">Ärlighet framför allt</h3>
-      <p style="font-size:14px;color:var(--g400);line-height:1.8;font-weight:300;">Vi säger ifrån om en idé inte håller. Vi överlevererar aldrig löften och underleverar aldrig resultat. Ni ska alltid veta exakt var projektet befinner sig.</p>
-    </div>
-
-    <div style="padding:44px 36px;background:rgba(255,255,255,.02);border-right:1px solid rgba(255,255,255,.07);" class="reveal d2">
-      <div style="margin-bottom:24px;">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-      </div>
-      <h3 style="font-size:18px;font-weight:400;color:#fff;margin-bottom:14px;letter-spacing:-.01em;">Teknik i världsklass</h3>
-      <p style="font-size:14px;color:var(--g400);line-height:1.8;font-weight:300;">Vi väljer alltid rätt verktyg för jobbet — inte det som är trendigt. Modern arkitektur, skalbar kod och säkra system som håller över tid.</p>
-    </div>
-
-    <div style="padding:44px 36px;background:rgba(255,255,255,.02);" class="reveal d3">
-      <div style="margin-bottom:24px;">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      </div>
-      <h3 style="font-size:18px;font-weight:400;color:#fff;margin-bottom:14px;letter-spacing:-.01em;">Långsiktigt partnerskap</h3>
-      <p style="font-size:14px;color:var(--g400);line-height:1.8;font-weight:300;">Vi ser oss som er tekniska partner, inte en leverantör. Det betyder att vi finns kvar efter lansering — för support, vidareutveckling och strategi.</p>
-    </div>
-
-    <div style="padding:44px 36px;background:rgba(255,255,255,.015);border-right:1px solid rgba(255,255,255,.07);border-top:1px solid rgba(255,255,255,.07);" class="reveal d1">
-      <div style="margin-bottom:24px;">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      </div>
-      <h3 style="font-size:18px;font-weight:400;color:#fff;margin-bottom:14px;letter-spacing:-.01em;">Tid och budget</h3>
-      <p style="font-size:14px;color:var(--g400);line-height:1.8;font-weight:300;">Vi levererar i tid och håller budget. Det kräver noggrann planering, tydliga milstolpar och transparens längs hela vägen. Det är vår standard.</p>
-    </div>
-
-    <div style="padding:44px 36px;background:rgba(255,255,255,.015);border-right:1px solid rgba(255,255,255,.07);border-top:1px solid rgba(255,255,255,.07);" class="reveal d2">
-      <div style="margin-bottom:24px;">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      </div>
-      <h3 style="font-size:18px;font-weight:400;color:#fff;margin-bottom:14px;letter-spacing:-.01em;">Säkerhet by design</h3>
-      <p style="font-size:14px;color:var(--g400);line-height:1.8;font-weight:300;">Säkerhet är inte en eftertanke. Från autentisering till datalagring bygger vi säkert från grunden — i enlighet med GDPR och branschstandard.</p>
-    </div>
-
-    <div style="padding:44px 36px;background:rgba(255,255,255,.015);border-top:1px solid rgba(255,255,255,.07);" class="reveal d3">
-      <div style="margin-bottom:24px;">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
-      </div>
-      <h3 style="font-size:18px;font-weight:400;color:#fff;margin-bottom:14px;letter-spacing:-.01em;">Mätbara resultat</h3>
-      <p style="font-size:14px;color:var(--g400);line-height:1.8;font-weight:300;">Vi sätter upp mätbara mål innan projektet startar och följer upp resultaten efter lansering. Mjukvara ska generera ett konkret affärsvärde.</p>
-    </div>
-
-  </div>
-</section>
-<style>
-  @media (max-width:768px) {
-    #why-grid { grid-template-columns:1fr !important; }
-    #why { padding:80px 20px !important; }
-  }
-  @media (max-width:1024px) {
-    #why-grid { grid-template-columns:1fr 1fr !important; }
-  }
-</style>
-
-
-<!-- ============================================================
-     HUR VI JOBBAR — PINNED
-============================================================ -->
-<div id="process-pin-container">
-  <div id="process-sticky">
-
-    <span id="process-label">Hur vi jobbar</span>
-
-    <!-- Stage 1 -->
-    <div class="process-stage" data-stage="0">
-      <div class="ps-num">01</div>
-      <div class="ps-content">
-        <p class="ps-step-label">Steg ett</p>
-        <h3 class="ps-title">Konsultation</h3>
-        <p class="ps-body">Vi börjar alltid med att lyssna. Genom ett kostnadsfritt inledande möte kartlägger vi era behov, mål, målgrupper och tekniska utmaningar. Vi ställer de svåra frågorna tidigt — för att undvika kostsamma misstag senare. Resultatet är ett tydligt uppdragsdokument som båda parter signerar innan arbetet påbörjas.</p>
-      </div>
-    </div>
-
-    <!-- Stage 2 -->
-    <div class="process-stage" data-stage="1">
-      <div class="ps-num">02</div>
-      <div class="ps-content">
-        <p class="ps-step-label">Steg två</p>
-        <h3 class="ps-title">Design</h3>
-        <p class="ps-body">Innan en enda rad kod skrivs skapar vi klickbara prototyper och användningsflöden. Ni ser exakt hur produkten kommer att fungera och kännas — och kan ge feedback tidigt. Det sparar tid, pengar och frustration. Vi itererar tills ni är nöjda, sedan låser vi designen och börjar bygga.</p>
-      </div>
-    </div>
-
-    <!-- Stage 3 -->
-    <div class="process-stage" data-stage="2">
-      <div class="ps-num">03</div>
-      <div class="ps-content">
-        <p class="ps-step-label">Steg tre</p>
-        <h3 class="ps-title">Utveckling</h3>
-        <p class="ps-body">Vårt team bygger er lösning med modern, vältestad teknik i agila tvåveckorssprint. Ni bjuds in till regelbundna demo-möten där ni ser framstegen i realtid och kan påverka prioriteringarna. Kod granskas av minst två utvecklare, automatiserade tester körs kontinuerligt och säkerhet är inbyggt från dag ett.</p>
-      </div>
-    </div>
-
-    <!-- Stage 4 -->
-    <div class="process-stage" data-stage="3">
-      <div class="ps-num">04</div>
-      <div class="ps-content">
-        <p class="ps-step-label">Steg fyra</p>
-        <h3 class="ps-title">Leverans &amp; support</h3>
-        <p class="ps-body">Vi driftsätter lösningen, utbildar er personal och säkerställer en smidig övergång. Därefter erbjuder vi löpande support, prestandaövervakning och vidareutveckling. Ni får en dedikerad kontaktperson och tillgång till vår supportkanal dygnet runt. Vi betraktar oss som er tekniska avdelning — inte en extern leverantör.</p>
-      </div>
-    </div>
-
-    <!-- Progress dots -->
-    <div class="ps-dots">
-      <div class="ps-dot active" data-i="0"></div>
-      <div class="ps-dot" data-i="1"></div>
-      <div class="ps-dot" data-i="2"></div>
-      <div class="ps-dot" data-i="3"></div>
-    </div>
-  </div>
-</div>
-
-
-<!-- ============================================================
-     TJÄNSTER — KOLUMNER
-============================================================ -->
-<div id="services-pin-container" data-anchor="services">
-  <section id="svc-section">
-    <div style="margin-bottom:72px;">
-      <span class="label reveal">Tjänster</span>
-      <h2 class="section-title reveal d1" style="margin-top:12px;">Vad vi bygger.</h2>
-    </div>
-    <div id="svc-grid">
-
-      <!-- Kolumn 1: Webb -->
-      <div class="svc-col reveal d1">
-        <div class="svc-icon-wrap">
-          <div class="svc-bubble"></div>
-          <svg viewBox="0 0 46 46" fill="none">
-            <rect x="3" y="7" width="40" height="28" rx="4" stroke="#000" stroke-width="1.6"/>
-            <line x1="3" y1="15" x2="43" y2="15" stroke="#000" stroke-width="1.4" stroke-opacity=".5"/>
-            <circle cx="8.5" cy="11" r="1.8" fill="#000" fill-opacity=".5"/>
-            <circle cx="14.5" cy="11" r="1.8" fill="#000" fill-opacity=".5"/>
-            <line x1="17" y1="42" x2="29" y2="42" stroke="#000" stroke-width="1.4" stroke-opacity=".5"/>
-            <line x1="23" y1="35" x2="23" y2="42" stroke="#000" stroke-width="1.4" stroke-opacity=".5"/>
-          </svg>
-        </div>
-        <p class="svc-index">01 / 03</p>
-        <h3 class="svc-heading">Webb&shy;applikationer</h3>
-        <p class="svc-body">Skräddarsydda webblösningar byggda exakt för era arbetsflöden — inte tvärtom. Vi bygger allt från interna verktyg och kundportaler till komplexa SaaS-plattformar med avancerad affärslogik.</p>
-        <ul style="margin-top:24px;list-style:none;display:flex;flex-direction:column;gap:10px;">
-          <li style="font-size:13px;color:var(--g600);font-weight:300;display:flex;gap:10px;"><span>—</span> React, Next.js, Vue eller valfritt ramverk</li>
-          <li style="font-size:13px;color:var(--g600);font-weight:300;display:flex;gap:10px;"><span>—</span> Skalbar backend med Node.js, Python eller .NET</li>
-          <li style="font-size:13px;color:var(--g600);font-weight:300;display:flex;gap:10px;"><span>—</span> Molnbaserad infrastruktur med auto-skalning</li>
-          <li style="font-size:13px;color:var(--g600);font-weight:300;display:flex;gap:10px;"><span>—</span> GDPR-kompatibel datahantering</li>
-        </ul>
-      </div>
-
-      <!-- Kolumn 2: Mobil -->
-      <div class="svc-col reveal d2">
-        <div class="svc-icon-wrap">
-          <div class="svc-bubble"></div>
-          <svg viewBox="0 0 46 46" fill="none">
-            <rect x="12" y="3" width="22" height="40" rx="5" stroke="#000" stroke-width="1.6"/>
-            <line x1="12" y1="11" x2="34" y2="11" stroke="#000" stroke-width="1.4" stroke-opacity=".5"/>
-            <line x1="12" y1="35" x2="34" y2="35" stroke="#000" stroke-width="1.4" stroke-opacity=".5"/>
-            <circle cx="23" cy="39" r="1.6" fill="#000" fill-opacity=".5"/>
-            <rect x="19" y="6.5" width="8" height="1.4" rx=".7" fill="#000" fill-opacity=".4"/>
-          </svg>
-        </div>
-        <p class="svc-index">02 / 03</p>
-        <h3 class="svc-heading">Mobilappar</h3>
-        <p class="svc-body">Native och cross-platform appar för iOS och Android som era kunder faktiskt väljer att använda varje dag. Snabba, intuitiva och vackra appar som reflekterar ert varumärke.</p>
-        <ul style="margin-top:24px;list-style:none;display:flex;flex-direction:column;gap:10px;">
-          <li style="font-size:13px;color:var(--g600);font-weight:300;display:flex;gap:10px;"><span>—</span> React Native eller Flutter för cross-platform</li>
-          <li style="font-size:13px;color:var(--g600);font-weight:300;display:flex;gap:10px;"><span>—</span> Swift / Kotlin för native prestanda</li>
-          <li style="font-size:13px;color:var(--g600);font-weight:300;display:flex;gap:10px;"><span>—</span> Push-notifikationer, offline-läge, biometri</li>
-          <li style="font-size:13px;color:var(--g600);font-weight:300;display:flex;gap:10px;"><span>—</span> App Store och Google Play-publicering</li>
-        </ul>
-      </div>
-
-      <!-- Kolumn 3: Integrationer -->
-      <div class="svc-col reveal d3">
-        <div class="svc-icon-wrap">
-          <div class="svc-bubble"></div>
-          <svg viewBox="0 0 46 46" fill="none">
-            <circle cx="9"  cy="13" r="6" stroke="#000" stroke-width="1.6"/>
-            <circle cx="37" cy="13" r="6" stroke="#000" stroke-width="1.6"/>
-            <circle cx="23" cy="37" r="6" stroke="#000" stroke-width="1.6"/>
-            <line x1="15" y1="13" x2="31" y2="13" stroke="#000" stroke-width="1.4" stroke-opacity=".5"/>
-            <line x1="12" y1="18" x2="20" y2="32" stroke="#000" stroke-width="1.4" stroke-opacity=".5"/>
-            <line x1="34" y1="18" x2="26" y2="32" stroke="#000" stroke-width="1.4" stroke-opacity=".5"/>
-          </svg>
-        </div>
-        <p class="svc-index">03 / 03</p>
-        <h3 class="svc-heading">System&shy;integrationer</h3>
-        <p class="svc-body">Vi kopplar ihop era befintliga system och verktyg så att data flödar sömlöst — utan manuellt arbete och utan informationssilos. Robusta integrationslager som håller.</p>
-        <ul style="margin-top:24px;list-style:none;display:flex;flex-direction:column;gap:10px;">
-          <li style="font-size:13px;color:var(--g600);font-weight:300;display:flex;gap:10px;"><span>—</span> REST- och GraphQL API-integrationer</li>
-          <li style="font-size:13px;color:var(--g600);font-weight:300;display:flex;gap:10px;"><span>—</span> Realtidssynkronisering och webhooks</li>
-          <li style="font-size:13px;color:var(--g600);font-weight:300;display:flex;gap:10px;"><span>—</span> Fortnox, Visma, Salesforce, HubSpot m.fl.</li>
-          <li style="font-size:13px;color:var(--g600);font-weight:300;display:flex;gap:10px;"><span>—</span> Felhantering, loggning och övervakning</li>
-        </ul>
-      </div>
-
-    </div>
-  </section>
-</div>
-
-
-<div class="divider"></div>
-
-
-<!-- ============================================================
-     TESTIMONIALS
-============================================================ -->
-<section id="testimonials">
-  <div class="test-head">
-    <span class="label reveal">Kundcase</span>
-    <h2 class="section-title reveal d1">Vad våra kunder säger.</h2>
-  </div>
-
-  <div class="test-track" id="testTrack">
-    <div class="t-card reveal d1">
-      <p class="t-text">Triad Solutions levererade exakt det vi behövde — i tid och inom budget. Deras förmåga att förstå vår verksamhet redan från dag ett var imponerande. Vi har sparat hundratals timmar i månaden.</p>
-      <div class="t-author">
-        <div class="t-avatar">AL</div>
-        <div>
-          <div class="t-name">Anna Lindström</div>
-          <div class="t-role">VD, Lindström Logistik AB</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="t-card reveal d2">
-      <p class="t-text">Vi hade försökt lösa vårt problem med standardverktyg i flera år. Triad tog fram en lösning på tre månader som förändrade hur hela vår organisation arbetar. Imponerande kompetens och professionalism.</p>
-      <div class="t-author">
-        <div class="t-avatar">MH</div>
-        <div>
-          <div class="t-name">Marcus Hedström</div>
-          <div class="t-role">CTO, Novacraft Sweden</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="t-card reveal d3">
-      <p class="t-text">Samarbetet med Triad Solutions är en av de bästa affärsbesluten vi tagit. De lyssnar verkligen och bygger det ni faktiskt behöver — inte vad de tror att ni behöver. Rekommenderas varmt.</p>
-      <div class="t-author">
-        <div class="t-avatar">SK</div>
-        <div>
-          <div class="t-name">Sofia Karlsson</div>
-          <div class="t-role">Grundare, Klara Fastigheter AB</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="t-card reveal d4">
-      <p class="t-text">Professionella, snabba och de förstod exakt vad vi behövde. Projektet gick smidigare än vi någonsin hade hoppats och slutresultatet översteg förväntningarna på alla plan.</p>
-      <div class="t-author">
-        <div class="t-avatar">JB</div>
-        <div>
-          <div class="t-name">Johan Bergström</div>
-          <div class="t-role">COO, Bergström &amp; Partners</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-
 <div class="divider"></div>
 
 
@@ -1353,7 +2003,7 @@
     <div class="contact-head">
       <span class="label reveal">Kontakt</span>
       <h2 class="section-title reveal d1">Redo att ta nästa steg?</h2>
-      <p class="section-body reveal d2">Fyll i formuläret så hör vi av oss inom 24 timmar för ett kostnadsfritt inledande möte.</p>
+      <p class="section-body reveal d2">Fyll i formuläret för ett kostnadsfritt inledande möte.</p>
     </div>
 
     <form id="contactForm" novalidate>
@@ -1524,13 +2174,37 @@
 <div class="modal-backdrop" id="modal-privacy">
   <div class="modal-box">
     <button class="modal-close" data-close="modal-privacy">✕</button>
-    <h2>Integritetspolicy</h2>
-    <p>Triad Solutions AB ("vi", "oss") värnar om din personliga integritet. Denna policy förklarar hur vi samlar in, använder och skyddar dina personuppgifter i enlighet med GDPR.</p>
-    <p><strong style="color:#fff;font-weight:400;">Vilka uppgifter samlar vi in?</strong><br>Vi samlar in uppgifter som du lämnar via vårt kontaktformulär: namn, e-postadress, telefonnummer och företag.</p>
-    <p><strong style="color:#fff;font-weight:400;">Hur används uppgifterna?</strong><br>Uppgifterna används enbart för att besvara din förfrågan och för att etablera en affärsrelation. Vi säljer aldrig dina uppgifter till tredje part.</p>
-    <p><strong style="color:#fff;font-weight:400;">Lagring</strong><br>Dina uppgifter lagras så länge det är nödvändigt för att uppfylla ändamålet, därefter raderas de.</p>
-    <p><strong style="color:#fff;font-weight:400;">Dina rättigheter</strong><br>Du har rätt att begära tillgång till, rättelse av eller radering av dina uppgifter. Kontakta oss på <a href="mailto:info@triadsolutions.se" style="color:#fff;">info@triadsolutions.se</a>.</p>
-    <p style="margin-bottom:0;">Senast uppdaterad: April 2026</p>
+    <h2>Integritetspolicy – Triad AB</h2>
+    <p style="color:#aaa;font-size:0.85rem;">Senast uppdaterad: 2026-04-12</p>
+
+    <p><strong style="color:#fff;font-weight:400;">1. Allmänt</strong><br>Denna policy beskriver hur Triad AB samlar in och använder personuppgifter som delas med oss via vår hemsida. Vårt mål är att vara så transparenta som möjligt med hur vi hanterar din information.</p>
+
+    <p><strong style="color:#fff;font-weight:400;">2. Vilka uppgifter samlar vi in?</strong><br>När du använder vår hemsida eller kontaktar oss kan vi komma att samla in följande uppgifter:<br><br>
+    <strong style="color:#fff;font-weight:400;">Kontaktuppgifter:</strong> Namn, e-postadress, telefonnummer och eventuellt företagsnamn som du anger i vårt kontaktformulär.<br>
+    <strong style="color:#fff;font-weight:400;">Meddelandehistorik:</strong> Den information du själv väljer att skriva i ditt meddelande till oss.<br>
+    <strong style="color:#fff;font-weight:400;">Teknisk data:</strong> IP-adress, typ av enhet och webbläsare samt hur du interagerar med sidan (via cookies).</p>
+
+    <p><strong style="color:#fff;font-weight:400;">3. Varför samlar vi in dessa uppgifter?</strong><br>Vi behandlar din data för att:<br><br>
+    Kunna återkoppla på dina frågor och förfrågningar.<br>
+    Etablera en affärskontakt om du visat intresse för våra tjänster.<br>
+    Förbättra användarupplevelsen på vår hemsida genom statistik och analys.</p>
+
+    <p><strong style="color:#fff;font-weight:400;">4. Rättslig grund</strong><br>Vi behandlar dina personuppgifter med stöd av intresseavvägning. Vi bedömer att vårt berättigade intresse av att kunna svara på dina frågor och kommunicera med dig som visat intresse för oss väger tyngre än det eventuella integritetsintrång som behandlingen innebär.</p>
+
+    <p><strong style="color:#fff;font-weight:400;">5. Hur länge sparar vi din data?</strong><br>
+    <strong style="color:#fff;font-weight:400;">Kontaktförfrågningar:</strong> Vi sparar dina uppgifter så länge det är nödvändigt för att hjälpa dig med ditt ärende. Om kontakten inte leder till ett kundförhållande raderas uppgifterna efter [t.ex. 6 eller 12] månader.<br>
+    <strong style="color:#fff;font-weight:400;">Analysdata:</strong> Information från cookies rensas regelbundet enligt de inställningar som finns i våra analysverktyg.</p>
+
+    <p><strong style="color:#fff;font-weight:400;">6. Vilka delar vi informationen med?</strong><br>Vi säljer aldrig dina uppgifter. Vi använder dock vissa underleverantörer för att hemsidan ska fungera:<br><br>
+    <strong style="color:#fff;font-weight:400;">Webbhotell:</strong> Där hemsidan och dess data lagras.<br>
+    <strong style="color:#fff;font-weight:400;">E-postleverantör:</strong> För att ta emot och skicka meddelanden till dig.<br>
+    <strong style="color:#fff;font-weight:400;">Analysverktyg:</strong> (T.ex. Google Analytics) för att se hur många som besöker sidan.</p>
+
+    <p style="margin-bottom:0;"><strong style="color:#fff;font-weight:400;">7. Dina rättigheter</strong><br>Du har när som helst rätt att:<br><br>
+    Begära ut ett registerutdrag på den data vi har om dig.<br>
+    Be oss rätta felaktiga uppgifter.<br>
+    Be oss radera din information ur våra system.<br><br>
+    För att utöva dina rättigheter, kontakta oss på: <a href="mailto:kontakt@triadsolutions.se" style="color:#fff;">kontakt@triadsolutions.se</a></p>
   </div>
 </div>
 
@@ -1581,15 +2255,11 @@
     iOffsetY = (ir.top  + ir.height / 2) - vcy;
     onScroll(); // Re-apply with correct offsets
   }
-  // Wait for the exact fonts used in the hero title to be rendered
-  Promise.all([
-    document.fonts.load('600 220px Roboto'),
-    document.fonts.load('100 220px Montserrat')
-  ]).then(() => requestAnimationFrame(updateHeroOrigin));
-  // Safari fallback in case Promise.all resolves early
-  setTimeout(updateHeroOrigin, 800);
+  // SVG paths render synchronously — just wait for layout
+  requestAnimationFrame(updateHeroOrigin);
+  setTimeout(updateHeroOrigin, 400);
   window.addEventListener('resize', updateHeroOrigin);
-  const processPinEl  = document.getElementById('process-pin-container');
+  const whyPinEl      = document.getElementById('why-pin-container');
 
   /* ═══════════════════════════════════════════════
      MAIN SCROLL HANDLER
@@ -1602,51 +2272,63 @@
     // Hero zoom + bg — translate so the I stays on viewport center
     const s = 1 + p * 39;
     heroTitle.style.transform = `scale(${s}) translate(${-iOffsetX}px, ${-iOffsetY}px)`;
-    const w = Math.round(255 * Math.max(0, 1 - p / 0.55));
-    const bgColor = `rgb(${w},${w},${w})`;
-    heroSticky.style.background = bgColor;
-    document.getElementById('meta-theme').setAttribute('content', bgColor);
-    document.documentElement.style.background = bgColor;
-    document.body.style.background = bgColor;
+
+    // Fade blobs out as user scrolls into the page
+    const blobOpacity = Math.max(0, 1 - p / 0.55);
+    const blobsEl = document.getElementById('hero-blobs');
+    if (blobsEl) blobsEl.style.opacity = blobOpacity;
+    document.getElementById('meta-theme').setAttribute('content', p < 0.3 ? '#00b4a8' : '#061a2e');
+    document.documentElement.style.background = '#061a2e';
+    document.body.style.background = '#061a2e';
 
     // Fade out scroll hint quickly as user starts scrolling
     scrollHint.style.opacity = Math.max(0, 1 - p * 8);
 
-    // Navbar light/dark
-    if (p < 0.4) {
-      navbar.classList.add('light');
-      navbar.style.background = '';
-    } else {
-      navbar.classList.remove('light');
-      navbar.style.background = 'rgba(0,0,0,.88)';
+    // Navbar always dark (gradient hero is dark)
+    navbar.classList.remove('light');
+    navbar.style.background = 'transparent';
+
+    // ── WHY / BELIEF sticky scroll ──
+    if (window.innerWidth > 768) {
+      const whyH   = whyPinEl.offsetHeight - window.innerHeight;
+      const whyScr = -whyPinEl.getBoundingClientRect().top;
+      const whyP   = Math.max(0, Math.min(1, whyScr / whyH));
+
+      document.getElementById('why-label').classList.toggle('in', whyP > 0 && whyP < 1);
+
+      const WHY_COUNT = 6;
+      const GRACE     = 0.08;
+      const innerP    = Math.max(0, Math.min(1, (whyP - GRACE) / (1 - GRACE * 2)));
+      const activeIdx = Math.min(WHY_COUNT - 1, Math.floor(innerP * WHY_COUNT));
+
+      document.querySelectorAll('.why-nav-item').forEach((btn, i) => {
+        btn.classList.toggle('active', i === activeIdx);
+      });
+      document.querySelectorAll('.why-panel').forEach((panel, i) => {
+        panel.classList.remove('active', 'exit');
+        if (i === activeIdx)    panel.classList.add('active');
+        else if (i < activeIdx) panel.classList.add('exit');
+      });
+
+      const fillPct = (activeIdx / (WHY_COUNT - 1)) * 100;
+      document.getElementById('why-progress-fill').style.height = fillPct + '%';
     }
 
-    // ── PROCESS pinned stages ──
-    const procH   = processPinEl.offsetHeight - window.innerHeight;
-    const procScr = -processPinEl.getBoundingClientRect().top;
-    const procP   = Math.max(0, Math.min(1, procScr / procH));
-
-    document.getElementById('process-label').classList.toggle('in', procP > 0 && procP < 1);
-
-    const stages     = document.querySelectorAll('.process-stage');
-    const psDots     = document.querySelectorAll('.ps-dot');
-    const stageCount = stages.length;
-    const idx        = Math.min(stageCount - 1, Math.floor(procP * stageCount));
-
-    stages.forEach((s, i) => {
-      s.classList.remove('active', 'exit');
-      if (i === idx)       s.classList.add('active');
-      else if (i < idx)    s.classList.add('exit');
-    });
-    psDots.forEach((d, i) => {
-      d.classList.toggle('active', i === idx);
-      if (i === idx) {
-        const fill = (procP * stageCount) - idx;
-        d.style.setProperty('--fill-scale', fill.toFixed(4));
-      }
-    });
-
   }
+
+  // Click left nav item → scroll to that belief's scroll zone
+  document.querySelectorAll('.why-nav-item').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const idx       = parseInt(btn.dataset.index);
+      const WHY_COUNT = 6;
+      const GRACE     = 0.08;
+      const innerP    = (idx + 0.5) / WHY_COUNT;
+      const whyP      = GRACE + innerP * (1 - GRACE * 2);
+      const whyH      = whyPinEl.offsetHeight - window.innerHeight;
+      const targetY   = whyPinEl.offsetTop + whyP * whyH;
+      window.scrollTo({ top: targetY, behavior: 'smooth' });
+    });
+  });
 
   let rafPending = false;
   function onScrollRaf() {
@@ -1656,6 +2338,55 @@
   }
   window.addEventListener('scroll', onScrollRaf, { passive: true });
   onScroll();
+
+  /* ═══════════════════════════════════════════════
+     SERVICE TABS — filter cards
+  ═══════════════════════════════════════════════ */
+  (function initSvcNav() {
+    const catCards  = document.querySelectorAll('.svc-cat-card');
+    const subcards  = document.querySelectorAll('.svc-subcard');
+    const tabs      = document.querySelectorAll('.svc-tab');
+    const backBtn   = document.getElementById('svc-back');
+
+    function showCategories() {
+      catCards.forEach(c => c.classList.remove('hidden'));
+      subcards.forEach(c => c.classList.add('hidden'));
+      backBtn.classList.add('hidden');
+      tabs.forEach(t => t.classList.remove('active'));
+      document.querySelector('.svc-tab[data-filter="all"]').classList.add('active');
+    }
+
+    function showSubcards(group) {
+      catCards.forEach(c => c.classList.add('hidden'));
+      subcards.forEach(c => {
+        c.classList.toggle('hidden', c.dataset.category !== group);
+      });
+      backBtn.classList.remove('hidden');
+      tabs.forEach(t => t.classList.remove('active'));
+      const activeTab = document.querySelector(`.svc-tab[data-filter="${group}"]`);
+      if (activeTab) activeTab.classList.add('active');
+    }
+
+    catCards.forEach(card => {
+      card.addEventListener('click', () => showSubcards(card.dataset.group));
+    });
+
+    backBtn.addEventListener('click', showCategories);
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const filter = tab.dataset.filter;
+        if (filter === 'all') {
+          showCategories();
+        } else {
+          showSubcards(filter);
+        }
+      });
+    });
+
+    // Initial state: show category cards, hide subcards
+    showCategories();
+  })();
 
   /* ═══════════════════════════════════════════════
      ABOUT HEADLINE — word-by-word reveal
@@ -1768,7 +2499,7 @@
   document.getElementById('contactForm').addEventListener('submit', function(e) {
     e.preventDefault();
     const btn = this.querySelector('.submit-btn');
-    btn.textContent = 'Skickat! Vi återkommer inom 24 h.';
+    btn.textContent = 'Skickat! Vi återkommer snart.';
     btn.disabled = true;
   });
 
