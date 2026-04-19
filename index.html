@@ -2753,11 +2753,30 @@
   /* ═══════════════════════════════════════════════
      CONTACT FORM
   ═══════════════════════════════════════════════ */
-  document.getElementById('contactForm').addEventListener('submit', function(e) {
+  document.getElementById('contactForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const btn = this.querySelector('.submit-btn');
-    btn.textContent = 'Skickat! Vi återkommer snart.';
+    btn.textContent = 'Skickar...';
     btn.disabled = true;
+
+    const data = new FormData(this);
+    try {
+      const res = await fetch('https://formspree.io/f/xpqklqdp', {
+        method: 'POST',
+        body: data,
+        headers: { 'Accept': 'application/json' }
+      });
+      if (res.ok) {
+        btn.textContent = 'Skickat! Vi återkommer snart.';
+        this.reset();
+      } else {
+        btn.textContent = 'Något gick fel. Försök igen.';
+        btn.disabled = false;
+      }
+    } catch {
+      btn.textContent = 'Något gick fel. Försök igen.';
+      btn.disabled = false;
+    }
   });
 
   /* ═══════════════════════════════════════════════
