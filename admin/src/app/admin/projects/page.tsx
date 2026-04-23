@@ -5,53 +5,118 @@ import { NewProjectButton } from "./NewProjectButton";
 
 export const dynamic = "force-dynamic";
 
+type Project = {
+  id: string;
+  name: string;
+  status: string | null;
+  priority: string | null;
+  summary: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  owner: { display_name: string | null } | null;
+  customer: { name: string } | null;
+  tasks: { status: string }[];
+};
+
 export default async function ProjectsPage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("projects")
-    .select("id,name,status,priority,summary,start_date,end_date,owner:profiles(display_name)")
+    .select(
+      "id,name,status,priority,summary,start_date,end_date,owner:profiles(display_name),customer:customers(name),tasks(status)",
+    )
     .order("status");
+
+  const projects = (data ?? []) as unknown as Project[];
 
   return (
     <>
-      <PageHeader title="Projekt" subtitle="Aktiva och planerade projekt med status & ansvarig." right={<NewProjectButton />} />
-      <div className="glass rounded-card overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-white/[0.03] text-left text-[var(--muted)] text-xs uppercase tracking-wider">
-            <tr>
-              <th className="p-3">Namn</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">Prioritet</th>
-              <th className="p-3">Ägare</th>
-              <th className="p-3">Tidsperiod</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/5">
-            {(data ?? []).map((p: any) => (
-              <tr key={p.id} className="hover:bg-white/[0.02]">
-                <td className="p-3">
-                  <div className="font-medium">{p.name}</div>
-                  {p.summary && <div className="text-xs text-[var(--muted)] mt-0.5">{p.summary}</div>}
-                </td>
-                <td className="p-3"><Chip tone={statusTone(p.status)}>{p.status}</Chip></td>
-                <td className="p-3"><Chip tone={p.priority === "high" ? "red" : p.priority === "medium" ? "yellow" : "gray"}>{p.priority ?? "—"}</Chip></td>
-                <td className="p-3 text-[var(--muted)]">{p.owner?.display_name ?? "—"}</td>
-                <td className="p-3 text-[var(--muted)]">
-                  {fmt(p.start_date)} → {fmt(p.end_date)}
-                </td>
-              </tr>
-            ))}
-            {!data?.length && (
-              <tr><td colSpan={5} className="p-8 text-center text-sm text-[var(--muted)]">Inga projekt än.</td></tr>
-            )}
-          </tbody>
-        </table>
+      <PageHeader
+        title="Projekt"
+        subtitle="Pågående arbete — framsteg beräknas automatiskt från uppgifter."
+        right={<NewProjectButton />}
+      />
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {projects.map((p) => (
+          <ProjectCard key={p.id} project={p} />
+        ))}
+        {!projects.length && (
+          <div className="col-span-full glass rounded-card p-10 text-center text-sm text-[var(--muted)]">
+            Inga projekt än.
+          </div>
+        )}
       </div>
     </>
   );
 }
 
-function fmt(d: string | null) { return d ? new Date(d).toLocaleDateString("sv-SE") : "—"; }
+function ProjectCard({ project: p }: { project: Project }) {
+  const total = p.tasks?.length ?? 0;
+  const done = (p.tasks ?? []).filter((t) => t.status === "done").length;
+  const inProgress = (p.tasks ?? []).filter((t) => t.status === "in_progress").length;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+
+  return (
+    <article className="glass rounded-card p-5 flex flex-col gap-4 hover:border-white/15 transition-colors">
+      <header className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="font-heading font-semibold text-base leading-tight">{p.name}</h3>
+          {p.customer?.name && (
+            <div className="mt-1 text-xs text-[var(--muted)]">{p.customer.name}</div>
+          )}
+        </div>
+        <div className="flex flex-col items-end gap-1 shrink-0">
+          <Chip tone={statusTone(p.status)}>{statusLabel(p.status)}</Chip>
+          {p.priority && (
+            <Chip tone={p.priority === "high" ? "red" : p.priority === "medium" ? "yellow" : "gray"}>
+              {priorityLabel(p.priority)}
+            </Chip>
+          )}
+        </div>
+      </header>
+
+      {p.summary && (
+        <p className="text-sm text-[var(--muted)] leading-relaxed line-clamp-3">{p.summary}</p>
+      )}
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-[var(--muted)]">Framsteg</span>
+          <span className="font-mono text-white">
+            {done}/{total} · {pct}%
+          </span>
+        </div>
+        <div className="h-1.5 overflow-hidden rounded-full bg-white/5">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-[var(--triad-teal)] to-emerald-400 transition-all duration-500"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <div className="flex gap-3 text-[11px] text-[var(--muted)]">
+          <Dot color="bg-[var(--triad-teal)]" /> {done} klara
+          <Dot color="bg-amber-400" /> {inProgress} pågår
+          <Dot color="bg-white/30" /> {total - done - inProgress} att göra
+        </div>
+      </div>
+
+      <footer className="flex items-center justify-between border-t border-white/5 pt-3 text-xs text-[var(--muted)]">
+        <span>{p.owner?.display_name ?? "Okänd ägare"}</span>
+        <span>
+          {fmt(p.start_date)} → {fmt(p.end_date)}
+        </span>
+      </footer>
+    </article>
+  );
+}
+
+function Dot({ color }: { color: string }) {
+  return <span className={`mr-1 inline-block h-1.5 w-1.5 rounded-full ${color}`} />;
+}
+
+function fmt(d: string | null) {
+  return d ? new Date(d).toLocaleDateString("sv-SE", { day: "numeric", month: "short" }) : "—";
+}
+
 function statusTone(s: string | null): any {
   if (!s) return "gray";
   if (s === "done") return "green";
@@ -59,5 +124,27 @@ function statusTone(s: string | null): any {
   if (s === "planning") return "blue";
   if (s === "canceled") return "red";
   if (s === "paused") return "yellow";
+  if (s === "idea") return "purple";
+  if (s === "backlog") return "gray";
   return "gray";
+}
+function statusLabel(s: string | null) {
+  return s === "in_progress"
+    ? "Pågår"
+    : s === "planning"
+      ? "Planering"
+      : s === "done"
+        ? "Klart"
+        : s === "canceled"
+          ? "Avbrutet"
+          : s === "paused"
+            ? "Pausat"
+            : s === "idea"
+              ? "Idé"
+              : s === "backlog"
+                ? "Backlog"
+                : s ?? "—";
+}
+function priorityLabel(p: string | null) {
+  return p === "high" ? "Hög prio" : p === "medium" ? "Medel prio" : p === "low" ? "Låg prio" : p ?? "—";
 }
