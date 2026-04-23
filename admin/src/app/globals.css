@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --triad-teal: #00b4a8;
+  --triad-navy: #0a2540;
+  --triad-antracit: #2b2d2f;
+  --bg: #0a1020;
+  --surface: #0f1b35;
+  --surface-hi: #13254a;
+  --border: rgba(255, 255, 255, 0.08);
+  --muted: #8494b0;
+  --text: #e7ecf3;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Roboto", system-ui, sans-serif;
+}
+
+h1, h2, h3, h4, h5 { font-family: "Montserrat", system-ui, sans-serif; }
+
+.glass {
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+  border: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+}
+
+.brand-gradient {
+  background: linear-gradient(135deg, #00b4a8 0%, #0a2540 100%);
+}
+
+.ring-focus:focus-visible {
+  outline: 2px solid var(--triad-teal);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.16); }
