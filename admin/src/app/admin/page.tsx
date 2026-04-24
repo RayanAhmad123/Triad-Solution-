@@ -89,7 +89,7 @@ export default async function OverviewPage() {
               {myTasks.map((t) => (
                 <li key={t.id} className="py-2.5 text-sm">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="truncate">{t.title}</span>
+                    <span className="truncate flex-1 min-w-0">{t.title}</span>
                     {t.priority && (
                       <Chip tone={t.priority === "high" ? "red" : t.priority === "medium" ? "yellow" : "gray"}>
                         {t.priority === "high" ? "Hög" : t.priority === "medium" ? "Medel" : "Låg"}
@@ -124,10 +124,10 @@ export default async function OverviewPage() {
               const name = t.assignee?.display_name ?? "T";
               const initials = name.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2);
               return (
-                <li key={t.id} className="py-2.5 flex items-center justify-between gap-3 text-sm group hover:bg-white/[0.02] -mx-5 px-5">
-                  <span className="truncate flex-1">{t.title}</span>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="h-6 w-6 rounded-full bg-purple-500/20 text-purple-300 text-[10px] flex items-center justify-center font-semibold shrink-0">
+                <li key={t.id} className="py-2.5 flex flex-col gap-1 text-sm group hover:bg-white/[0.02] -mx-5 px-5">
+                  <span className="truncate font-medium">{t.title}</span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="h-5 w-5 rounded-full bg-purple-500/20 text-purple-300 text-[10px] flex items-center justify-center font-semibold shrink-0">
                       {initials}
                     </span>
                     {t.priority && (
@@ -136,7 +136,6 @@ export default async function OverviewPage() {
                       </Chip>
                     )}
                     <Chip tone={statusTone(t.status)}>{t.status}</Chip>
-                    <ChevronRight size={14} className="text-[var(--muted)] opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                 </li>
               );
