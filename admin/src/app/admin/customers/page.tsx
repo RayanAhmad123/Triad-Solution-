@@ -1,20 +1,49 @@
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/PageHeader";
 import { Chip } from "@/components/Chip";
+import { SortSelect } from "@/components/SortSelect";
 import { NewCustomerButton } from "./NewCustomerButton";
 
 export const dynamic = "force-dynamic";
 
-export default async function CustomersPage() {
+const SORTS = [
+  { value: "name", label: "Namn (A–Ö)" },
+  { value: "status", label: "Status" },
+  { value: "industry", label: "Bransch" },
+  { value: "created_desc", label: "Nyast" },
+  { value: "created_asc", label: "Äldst" },
+];
+
+export default async function CustomersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sort?: string }>;
+}) {
+  const sp = await searchParams;
+  const sort = sp.sort ?? "name";
   const supabase = await createClient();
-  const { data } = await supabase
+  let q = supabase
     .from("customers")
-    .select("id,name,contact_person,industry,status,email,phone,website,notes,created_at")
-    .order("name");
+    .select("id,name,contact_person,industry,status,email,phone,website,notes,created_at");
+  if (sort === "status") q = q.order("status").order("name");
+  else if (sort === "industry") q = q.order("industry", { nullsFirst: false }).order("name");
+  else if (sort === "created_desc") q = q.order("created_at", { ascending: false });
+  else if (sort === "created_asc") q = q.order("created_at", { ascending: true });
+  else q = q.order("name");
+  const { data } = await q;
 
   return (
     <>
-      <PageHeader title="Kunder" subtitle="Kundregister med kontaktuppgifter och status." right={<NewCustomerButton />} />
+      <PageHeader
+        title="Kunder"
+        subtitle="Kundregister med kontaktuppgifter och status."
+        right={
+          <div className="flex items-center gap-3">
+            <SortSelect options={SORTS} defaultValue="name" />
+            <NewCustomerButton />
+          </div>
+        }
+      />
       <div className="glass rounded-card overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-white/[0.03] text-left text-[var(--muted)] text-xs uppercase tracking-wider">

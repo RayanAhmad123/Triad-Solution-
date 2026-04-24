@@ -1,9 +1,18 @@
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/PageHeader";
 import { Chip } from "@/components/Chip";
+import { SortSelect } from "@/components/SortSelect";
 import { NewProjectButton } from "./NewProjectButton";
 
 export const dynamic = "force-dynamic";
+
+const SORTS = [
+  { value: "status", label: "Status" },
+  { value: "priority", label: "Prioritet" },
+  { value: "name", label: "Namn (A–Ö)" },
+  { value: "end_asc", label: "Slutdatum (närmast)" },
+  { value: "created_desc", label: "Nyast" },
+];
 
 type Project = {
   id: string;
@@ -18,15 +27,26 @@ type Project = {
   tasks: { status: string }[];
 };
 
-export default async function ProjectsPage() {
+export default async function ProjectsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sort?: string }>;
+}) {
+  const sp = await searchParams;
+  const sort = sp.sort ?? "status";
   const supabase = await createClient();
-  const { data } = await supabase
+  let q = supabase
     .from("projects")
     .select(
-      "id,name,status,priority,summary,start_date,end_date,owner:profiles(display_name),customer:customers(name),tasks(status)",
-    )
-    .order("status");
+      "id,name,status,priority,summary,start_date,end_date,created_at,owner:profiles(display_name),customer:customers(name),tasks(status)",
+    );
+  if (sort === "priority") q = q.order("priority", { ascending: false });
+  else if (sort === "name") q = q.order("name", { ascending: true });
+  else if (sort === "end_asc") q = q.order("end_date", { ascending: true, nullsFirst: false });
+  else if (sort === "created_desc") q = q.order("created_at", { ascending: false });
+  else q = q.order("status");
 
+  const { data } = await q;
   const projects = (data ?? []) as unknown as Project[];
 
   return (
@@ -34,7 +54,12 @@ export default async function ProjectsPage() {
       <PageHeader
         title="Projekt"
         subtitle="Pågående arbete — framsteg beräknas automatiskt från uppgifter."
-        right={<NewProjectButton />}
+        right={
+          <div className="flex items-center gap-3">
+            <SortSelect options={SORTS} defaultValue="status" />
+            <NewProjectButton />
+          </div>
+        }
       />
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {projects.map((p) => (

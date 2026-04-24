@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/PageHeader";
+import { SortSelect } from "@/components/SortSelect";
 import { NewTaskButton } from "./NewTaskButton";
 import { TaskCard, type Task } from "./TaskCard";
 
@@ -11,15 +12,38 @@ const COLUMNS: { key: "not_started" | "in_progress" | "done"; label: string; hin
   { key: "done", label: "Klart", hint: "Avslutat", accent: "bg-[var(--triad-teal)]" },
 ];
 
-export default async function TasksPage() {
+const SORTS = [
+  { value: "due_asc", label: "Deadline (närmast)" },
+  { value: "due_desc", label: "Deadline (senast)" },
+  { value: "priority", label: "Prioritet" },
+  { value: "created_desc", label: "Nyast" },
+  { value: "created_asc", label: "Äldst" },
+  { value: "title", label: "Titel (A–Ö)" },
+];
+
+export default async function TasksPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sort?: string }>;
+}) {
+  const sp = await searchParams;
+  const sort = sp.sort ?? "due_asc";
   const supabase = await createClient();
-  const { data: tasks } = await supabase
+
+  let q = supabase
     .from("tasks")
     .select(
-      "id,title,description,status,priority,due_at,assignee:profiles!tasks_assignee_id_fkey(id,display_name),project:projects(id,name)",
-    )
-    .order("due_at", { ascending: true, nullsFirst: false })
-    .order("priority", { ascending: false });
+      "id,title,description,status,priority,due_at,created_at,assignee:profiles!tasks_assignee_id_fkey(id,display_name),project:projects(id,name)",
+    );
+
+  if (sort === "due_desc") q = q.order("due_at", { ascending: false, nullsFirst: false });
+  else if (sort === "priority") q = q.order("priority", { ascending: false }).order("due_at", { ascending: true, nullsFirst: false });
+  else if (sort === "created_desc") q = q.order("created_at", { ascending: false });
+  else if (sort === "created_asc") q = q.order("created_at", { ascending: true });
+  else if (sort === "title") q = q.order("title", { ascending: true });
+  else q = q.order("due_at", { ascending: true, nullsFirst: false }).order("priority", { ascending: false });
+
+  const { data: tasks } = await q;
 
   const all = (tasks ?? []) as unknown as Task[];
   const groups: Record<string, Task[]> = { not_started: [], in_progress: [], done: [] };
@@ -36,7 +60,12 @@ export default async function TasksPage() {
       <PageHeader
         title="Uppgifter"
         subtitle="Teamets gemensamma att-göra-lista. Klicka checkboxen för att bocka av."
-        right={<NewTaskButton />}
+        right={
+          <div className="flex items-center gap-3">
+            <SortSelect options={SORTS} defaultValue="due_asc" />
+            <NewTaskButton />
+          </div>
+        }
       />
 
       <div className="mb-6 glass rounded-card p-4">

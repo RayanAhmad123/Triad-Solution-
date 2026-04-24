@@ -1,19 +1,36 @@
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/PageHeader";
 import { Chip } from "@/components/Chip";
+import { SortSelect } from "@/components/SortSelect";
 import { NewMeetingButton } from "./NewMeetingButton";
 import { MeetingsCalendar } from "./MeetingsCalendar";
 
 export const dynamic = "force-dynamic";
 
-export default async function MeetingsPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
+const SORTS = [
+  { value: "date_asc", label: "Datum (tidigast)" },
+  { value: "date_desc", label: "Datum (senast)" },
+  { value: "name", label: "Namn (A–Ö)" },
+  { value: "type", label: "Typ" },
+];
+
+export default async function MeetingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ view?: string; sort?: string }>;
+}) {
   const sp = await searchParams;
   const view = sp.view === "list" ? "list" : "calendar";
+  const sort = sp.sort ?? "date_asc";
   const supabase = await createClient();
-  const { data } = await supabase
+  let q = supabase
     .from("meetings")
-    .select("id,name,date:date_time,type,status,agenda,location,participants,notes,action_items")
-    .order("date_time", { ascending: true });
+    .select("id,name,date:date_time,type,status,agenda,location,participants,notes,action_items");
+  if (sort === "date_desc") q = q.order("date_time", { ascending: false });
+  else if (sort === "name") q = q.order("name", { ascending: true });
+  else if (sort === "type") q = q.order("type", { nullsFirst: false }).order("date_time", { ascending: true });
+  else q = q.order("date_time", { ascending: true });
+  const { data } = await q;
 
   return (
     <>
@@ -26,6 +43,7 @@ export default async function MeetingsPage({ searchParams }: { searchParams: Pro
               <a href="?view=calendar" className={`px-3 py-1.5 ${view === "calendar" ? "bg-white/10" : "hover:bg-white/5"}`}>Kalender</a>
               <a href="?view=list" className={`px-3 py-1.5 ${view === "list" ? "bg-white/10" : "hover:bg-white/5"}`}>Lista</a>
             </div>
+            {view === "list" && <SortSelect options={SORTS} defaultValue="date_asc" />}
             <NewMeetingButton />
           </div>
         }
