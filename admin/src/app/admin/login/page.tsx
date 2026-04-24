@@ -27,21 +27,10 @@ export default function LoginPage() {
     router.refresh();
   }
 
-  async function handleMagicLink() {
-    if (!email) { setMsg("Ange e-post först."); return; }
-    setLoading(true);
-    setMsg(null);
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${location.origin}/admin/auth/callback?next=${encodeURIComponent(next)}` },
-    });
-    setLoading(false);
-    setMsg(error ? error.message : "Mejl skickat — öppna länken för att logga in.");
-  }
-
   return (
-    <main className="min-h-screen grid place-items-center px-6 brand-gradient">
-      <div className="w-full max-w-md glass rounded-modal p-8">
+    <main className="relative min-h-screen grid place-items-center px-6 brand-gradient">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.55),rgba(0,0,0,0.85))]" />
+      <div className="relative w-full max-w-md rounded-modal border border-white/15 bg-[#0b0f14]/95 p-8 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)] ring-1 ring-white/5 backdrop-blur-xl">
         <div className="flex items-center gap-3 mb-6">
           <div className="h-9 w-9 rounded-lg brand-gradient" />
           <h1 className="font-heading text-2xl font-semibold">Triad Admin</h1>
@@ -57,7 +46,7 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 ring-focus"
+              className="mt-1 w-full rounded-btn bg-black/40 border border-white/10 px-3 py-2 ring-focus"
             />
           </label>
           <label className="block">
@@ -66,7 +55,7 @@ export default function LoginPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 ring-focus"
+              className="mt-1 w-full rounded-btn bg-black/40 border border-white/10 px-3 py-2 ring-focus"
             />
           </label>
           <button
@@ -76,16 +65,8 @@ export default function LoginPage() {
           >
             {loading ? "Loggar in…" : "Logga in"}
           </button>
-          <button
-            type="button"
-            onClick={handleMagicLink}
-            disabled={loading}
-            className="w-full rounded-btn border border-white/10 py-2.5 text-sm hover:bg-white/5"
-          >
-            Skicka magisk länk i stället
-          </button>
         </form>
-        {msg && <p className="mt-4 text-sm text-[var(--muted)]">{msg}</p>}
+        {msg && <p className="mt-4 text-sm text-rose-300">{msg}</p>}
       </div>
     </main>
   );
