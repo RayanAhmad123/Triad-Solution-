@@ -32,7 +32,7 @@ export function Sidebar({
     <aside
       className={`
         fixed inset-y-0 left-0 z-50 w-64 shrink-0 border-r border-white/5 bg-[var(--surface)] backdrop-blur flex flex-col
-        transition-transform duration-200
+        transition-transform duration-300 ease-in-out
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
         lg:static lg:translate-x-0 lg:h-screen lg:sticky lg:top-0
       `}
@@ -48,7 +48,7 @@ export function Sidebar({
         {onClose && (
           <button
             onClick={onClose}
-            className="lg:hidden p-1.5 rounded-btn hover:bg-white/5 text-[var(--muted)] hover:text-white"
+            className="lg:hidden p-2 rounded-btn hover:bg-white/5 text-[var(--muted)] hover:text-white"
             aria-label="Stäng meny"
           >
             <X size={16} />
@@ -64,7 +64,7 @@ export function Sidebar({
               key={item.href}
               href={item.href}
               onClick={onClose}
-              className={`flex items-center gap-3 px-3 py-2 rounded-btn text-sm mb-0.5 transition-colors ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-btn text-sm mb-0.5 transition-colors ${
                 active ? "bg-white/8 text-white" : "text-[var(--muted)] hover:text-white hover:bg-white/5"
               }`}
             >
@@ -78,7 +78,7 @@ export function Sidebar({
         <div className="text-xs text-[var(--muted)] px-2 py-1 truncate">{userEmail}</div>
         <button
           type="submit"
-          className="w-full flex items-center gap-2 px-3 py-2 rounded-btn text-sm text-[var(--muted)] hover:text-white hover:bg-white/5"
+          className="w-full flex items-center gap-2 px-3 py-2.5 rounded-btn text-sm text-[var(--muted)] hover:text-white hover:bg-white/5"
         >
           <LogOut size={16} />
           Logga ut

@@ -30,7 +30,7 @@ export default function LoginPage() {
   return (
     <main className="relative min-h-screen grid place-items-center px-6 brand-gradient">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.55),rgba(0,0,0,0.85))]" />
-      <div className="relative w-full max-w-md rounded-modal border border-white/15 bg-[#0b0f14]/95 p-8 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)] ring-1 ring-white/5 backdrop-blur-xl">
+      <div className="relative w-full max-w-md rounded-modal border border-white/15 bg-[#0b0f14]/95 p-6 sm:p-8 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)] ring-1 ring-white/5 backdrop-blur-xl">
         <div className="flex items-center gap-3 mb-6">
           <div className="h-9 w-9 rounded-lg brand-gradient" />
           <h1 className="font-heading text-2xl font-semibold">Triad Admin</h1>
