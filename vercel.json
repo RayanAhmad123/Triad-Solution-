@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "source": "/admin",
+      "destination": "https://triad-admin.vercel.app/admin"
+    },
+    {
+      "source": "/admin/:path*",
+      "destination": "https://triad-admin.vercel.app/admin/:path*"
+    }
+  ]
+}
