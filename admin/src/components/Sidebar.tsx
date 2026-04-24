@@ -31,18 +31,19 @@ export function Sidebar({
   return (
     <aside
       className={`
-        fixed inset-y-0 left-0 z-50 w-64 shrink-0 border-r border-white/5 bg-[var(--surface)] backdrop-blur flex flex-col
+        fixed inset-y-0 left-0 z-50 w-64 shrink-0 border-r border-white/8 bg-[var(--surface)] backdrop-blur flex flex-col
         transition-transform duration-300 ease-in-out
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
         lg:static lg:translate-x-0 lg:h-screen lg:sticky lg:top-0
       `}
     >
-      <div className="px-5 py-5 flex items-center justify-between gap-3">
+      {/* Logo */}
+      <div className="px-5 py-5 flex items-center justify-between gap-3 border-b border-white/5">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg brand-gradient" />
+          <div className="h-9 w-9 rounded-xl brand-gradient shadow-lg shadow-teal-500/20" />
           <div>
-            <div className="font-heading font-semibold tracking-tight">Triad</div>
-            <div className="text-[11px] uppercase tracking-wider text-[var(--muted)]">Admin</div>
+            <div className="font-heading font-bold tracking-tight text-base">Triad</div>
+            <div className="text-[10px] uppercase tracking-widest text-[var(--muted)]">Admin</div>
           </div>
         </div>
         {onClose && (
@@ -55,25 +56,44 @@ export function Sidebar({
           </button>
         )}
       </div>
-      <nav className="px-2 py-2 flex-1">
-        {nav.map((item) => {
+
+      {/* Navigation */}
+      <nav className="px-2 py-3 flex-1 space-y-0.5">
+        {nav.map((item, idx) => {
           const Icon = item.icon;
           const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+
+          const dividerAfter = idx === 0 || idx === 4;
+
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onClose}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-btn text-sm mb-0.5 transition-colors ${
-                active ? "bg-white/8 text-white" : "text-[var(--muted)] hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <Icon size={16} />
-              {item.label}
-            </Link>
+            <div key={item.href}>
+              <Link
+                href={item.href}
+                onClick={onClose}
+                className={`relative flex items-center gap-3 px-3 py-2.5 rounded-btn text-sm transition-colors overflow-hidden ${
+                  active
+                    ? "bg-white/10 text-white font-medium"
+                    : "text-[var(--muted)] hover:text-white hover:bg-white/5"
+                }`}
+              >
+                {active && (
+                  <span className="absolute left-0 top-1 bottom-1 w-0.5 rounded-full bg-teal-400" />
+                )}
+                <Icon
+                  size={16}
+                  className={active ? "text-teal-400" : "text-[var(--muted)]"}
+                />
+                {item.label}
+              </Link>
+              {dividerAfter && (
+                <div className="my-2 mx-3 border-t border-white/5" />
+              )}
+            </div>
           );
         })}
       </nav>
+
+      {/* User / Logout */}
       <form action="/admin/auth/signout" method="post" className="border-t border-white/5 p-3">
         <div className="text-xs text-[var(--muted)] px-2 py-1 truncate">{userEmail}</div>
         <button

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/PageHeader";
 import { Chip } from "@/components/Chip";
+import { CheckCircle2, CheckSquare, FolderKanban, Calendar, Users, ChevronRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -61,52 +62,57 @@ export default async function OverviewPage() {
     <>
       <PageHeader title="Översikt" subtitle="Från idé till SaaS-bolag — Triad Solutions internt nav." />
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4 mb-8">
-        <StatCard label="Öppna uppgifter" value={tasksOpen.count ?? 0} href="/admin/tasks" />
-        <StatCard label="Projekt" value={projects.count ?? 0} href="/admin/projects" />
-        <StatCard label="Kommande möten" value={meetings.count ?? 0} href="/admin/meetings" />
-        <StatCard label="Kunder" value={customers.count ?? 0} href="/admin/customers" />
+        <StatCard label="Öppna uppgifter" value={tasksOpen.count ?? 0} href="/admin/tasks" icon={CheckSquare} color="teal" />
+        <StatCard label="Projekt" value={projects.count ?? 0} href="/admin/projects" icon={FolderKanban} color="purple" />
+        <StatCard label="Kommande möten" value={meetings.count ?? 0} href="/admin/meetings" icon={Calendar} color="amber" />
+        <StatCard label="Kunder" value={customers.count ?? 0} href="/admin/customers" icon={Users} color="emerald" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <section className="glass rounded-card p-5">
+        <section className="glass rounded-xl border border-white/10 p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-heading font-semibold">Mina uppgifter</h2>
             <Link href="/admin/tasks" className="text-xs text-[var(--muted)] hover:text-white">
               Alla →
             </Link>
           </div>
-          <ul className="divide-y divide-white/5">
-            {myTasks.map((t) => (
-              <li key={t.id} className="py-2.5 text-sm">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="truncate">{t.title}</span>
-                  {t.priority && (
-                    <Chip
-                      tone={t.priority === "high" ? "red" : t.priority === "medium" ? "yellow" : "gray"}
-                    >
-                      {t.priority}
-                    </Chip>
-                  )}
-                </div>
-                {t.due_at && (
-                  <div
-                    className={`text-[11px] mt-0.5 ${
-                      new Date(t.due_at) < new Date() ? "text-rose-300" : "text-[var(--muted)]"
-                    }`}
-                  >
-                    {new Date(t.due_at) < new Date() && "⚠ "}
-                    {new Date(t.due_at).toLocaleDateString("sv-SE", { day: "numeric", month: "short" })}
+          {myTasks.length === 0 ? (
+            <div className="py-10 flex flex-col items-center gap-3 text-center">
+              <CheckCircle2 size={32} className="text-emerald-400 opacity-80" />
+              <div>
+                <p className="text-sm font-medium text-white/80">Allt klart!</p>
+                <p className="text-xs text-[var(--muted)] mt-0.5">Inga uppgifter tilldelade dig just nu.</p>
+              </div>
+            </div>
+          ) : (
+            <ul className="divide-y divide-white/5">
+              {myTasks.map((t) => (
+                <li key={t.id} className="py-2.5 text-sm">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate">{t.title}</span>
+                    {t.priority && (
+                      <Chip tone={t.priority === "high" ? "red" : t.priority === "medium" ? "yellow" : "gray"}>
+                        {t.priority === "high" ? "Hög" : t.priority === "medium" ? "Medel" : "Låg"}
+                      </Chip>
+                    )}
                   </div>
-                )}
-              </li>
-            ))}
-            {!myTasks.length && (
-              <li className="py-6 text-sm text-[var(--muted)]">Inga uppgifter tilldelade dig.</li>
-            )}
-          </ul>
+                  {t.due_at && (
+                    <div
+                      className={`text-[11px] mt-0.5 ${
+                        new Date(t.due_at) < new Date() ? "text-rose-300" : "text-[var(--muted)]"
+                      }`}
+                    >
+                      {new Date(t.due_at) < new Date() && "⚠ "}
+                      {new Date(t.due_at).toLocaleDateString("sv-SE", { day: "numeric", month: "short" })}
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
-        <section className="lg:col-span-2 glass rounded-card p-5">
+        <section className="lg:col-span-2 glass rounded-xl border border-white/10 p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-heading font-semibold">Teamets kommande uppgifter</h2>
             <Link href="/admin/tasks" className="text-xs text-[var(--muted)] hover:text-white">
@@ -114,29 +120,34 @@ export default async function OverviewPage() {
             </Link>
           </div>
           <ul className="divide-y divide-white/5">
-            {openTasks.map((t) => (
-              <li key={t.id} className="py-2.5 flex items-center justify-between gap-3 text-sm">
-                <span className="truncate">{t.title}</span>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-[11px] text-[var(--muted)]">
-                    {t.assignee?.display_name ?? "Teamet"}
-                  </span>
-                  {t.priority && (
-                    <Chip
-                      tone={t.priority === "high" ? "red" : t.priority === "medium" ? "yellow" : "gray"}
-                    >
-                      {t.priority}
-                    </Chip>
-                  )}
-                  <Chip tone={statusTone(t.status)}>{t.status}</Chip>
-                </div>
-              </li>
-            ))}
-            {!openTasks.length && <li className="py-6 text-sm text-[var(--muted)]">Inga öppna uppgifter.</li>}
+            {openTasks.map((t) => {
+              const name = t.assignee?.display_name ?? "T";
+              const initials = name.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2);
+              return (
+                <li key={t.id} className="py-2.5 flex items-center justify-between gap-3 text-sm group hover:bg-white/[0.02] -mx-5 px-5">
+                  <span className="truncate flex-1">{t.title}</span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="h-6 w-6 rounded-full bg-purple-500/20 text-purple-300 text-[10px] flex items-center justify-center font-semibold shrink-0">
+                      {initials}
+                    </span>
+                    {t.priority && (
+                      <Chip tone={t.priority === "high" ? "red" : t.priority === "medium" ? "yellow" : "gray"}>
+                        {t.priority === "high" ? "Hög" : t.priority === "medium" ? "Medel" : "Låg"}
+                      </Chip>
+                    )}
+                    <Chip tone={statusTone(t.status)}>{t.status}</Chip>
+                    <ChevronRight size={14} className="text-[var(--muted)] opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </li>
+              );
+            })}
+            {!openTasks.length && (
+              <li className="py-6 text-sm text-[var(--muted)]">Inga öppna uppgifter.</li>
+            )}
           </ul>
         </section>
 
-        <section className="lg:col-span-3 glass rounded-card p-5">
+        <section className="lg:col-span-3 glass rounded-xl border border-white/10 p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-heading font-semibold">Kommande möten</h2>
             <Link href="/admin/meetings" className="text-xs text-[var(--muted)] hover:text-white">
@@ -145,10 +156,13 @@ export default async function OverviewPage() {
           </div>
           <ul className="space-y-3">
             {upcomingMeetings.map((m) => (
-              <li key={m.id} className="text-sm">
-                <div className="font-medium">{m.name}</div>
-                <div className="text-xs text-[var(--muted)]">
-                  {m.date ? new Date(m.date).toLocaleString("sv-SE") : "Ingen tid"} · {m.type ?? "—"}
+              <li key={m.id} className="text-sm flex items-start gap-3">
+                <div className="h-2 w-2 rounded-full bg-[var(--triad-teal)] mt-1.5 shrink-0" />
+                <div>
+                  <div className="font-medium">{m.name}</div>
+                  <div className="text-xs text-[var(--muted)]">
+                    {m.date ? new Date(m.date).toLocaleString("sv-SE") : "Ingen tid"} · {m.type ?? "—"}
+                  </div>
                 </div>
               </li>
             ))}
@@ -162,11 +176,34 @@ export default async function OverviewPage() {
   );
 }
 
-function StatCard({ label, value, href }: { label: string; value: number; href: string }) {
+const colorMap = {
+  teal: { accentBar: "bg-teal-400", iconBg: "bg-teal-400/15", iconColor: "text-teal-400" },
+  purple: { accentBar: "bg-purple-400", iconBg: "bg-purple-400/15", iconColor: "text-purple-400" },
+  amber: { accentBar: "bg-amber-400", iconBg: "bg-amber-400/15", iconColor: "text-amber-400" },
+  emerald: { accentBar: "bg-emerald-400", iconBg: "bg-emerald-400/15", iconColor: "text-emerald-400" },
+};
+
+function StatCard({
+  label, value, href, icon: Icon, color,
+}: {
+  label: string;
+  value: number;
+  href: string;
+  icon: React.ElementType;
+  color: keyof typeof colorMap;
+}) {
+  const c = colorMap[color];
   return (
-    <Link href={href} className="glass rounded-card p-5 hover:bg-white/[0.03] transition-colors block">
-      <div className="text-xs uppercase tracking-wider text-[var(--muted)]">{label}</div>
-      <div className="font-heading text-3xl mt-1">{value}</div>
+    <Link
+      href={href}
+      className="glass rounded-xl border border-white/10 p-5 hover:bg-white/[0.03] transition-colors block relative overflow-hidden"
+    >
+      <div className={`absolute left-0 top-0 bottom-0 w-1 ${c.accentBar}`} />
+      <div className={`absolute top-3 right-3 p-1.5 rounded-lg ${c.iconBg}`}>
+        <Icon size={16} className={c.iconColor} />
+      </div>
+      <div className="text-xs uppercase tracking-wider text-[var(--muted)] pr-10 pl-2">{label}</div>
+      <div className="font-heading text-3xl font-bold mt-2 pl-2">{value}</div>
     </Link>
   );
 }

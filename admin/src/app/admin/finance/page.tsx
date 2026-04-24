@@ -22,9 +22,9 @@ export default async function FinancePage() {
     <>
       <PageHeader title="Ekonomi" subtitle="Utlägg, intäkter och fakturor." />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-8">
-        <Stat label="Intäkter" value={SEK(totalInc)} tone="green" />
-        <Stat label="Utlägg" value={SEK(totalExp)} tone="red" />
-        <Stat label="Netto" value={SEK(net)} tone={net >= 0 ? "teal" : "red"} />
+        <FinanceStat label="Intäkter" value={SEK(totalInc)} color="green" />
+        <FinanceStat label="Utlägg" value={SEK(totalExp)} color="red" />
+        <FinanceStat label="Netto" value={SEK(net)} color={net >= 0 ? "teal" : "red"} />
       </div>
 
       <Section title="Utlägg">
@@ -72,19 +72,28 @@ export default async function FinancePage() {
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: string; tone: "green" | "red" | "teal" }) {
-  const colors = tone === "green" ? "text-emerald-300" : tone === "red" ? "text-rose-300" : "text-[var(--triad-teal)]";
+const financeColorMap = {
+  green: { accentBar: "bg-emerald-400", numColor: "text-emerald-300", iconBg: "bg-emerald-400/10" },
+  red: { accentBar: "bg-rose-400", numColor: "text-rose-300", iconBg: "bg-rose-400/10" },
+  teal: { accentBar: "bg-teal-400", numColor: "text-teal-300", iconBg: "bg-teal-400/10" },
+};
+
+function FinanceStat({ label, value, color }: { label: string; value: string; color: "green" | "red" | "teal" }) {
+  const c = financeColorMap[color];
   return (
-    <div className="glass rounded-card p-5">
-      <div className="text-xs uppercase tracking-wider text-[var(--muted)]">{label}</div>
-      <div className={`font-heading text-3xl mt-1 ${colors}`}>{value}</div>
+    <div className="glass rounded-xl border border-white/10 p-5 relative overflow-hidden">
+      <div className={`absolute left-0 top-0 bottom-0 w-1 ${c.accentBar}`} />
+      <div className="pl-2">
+        <div className="text-xs uppercase tracking-wider text-[var(--muted)]">{label}</div>
+        <div className={`font-heading text-3xl font-bold mt-2 ${c.numColor}`}>{value}</div>
+      </div>
     </div>
   );
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="glass rounded-card overflow-hidden mb-6">
+    <section className="glass rounded-xl border border-white/10 overflow-hidden mb-6">
       <header className="px-5 py-3 border-b border-white/5 flex items-center justify-between">
         <h2 className="font-heading font-semibold">{title}</h2>
       </header>

@@ -16,6 +16,25 @@ export type Task = {
   assignee?: { id: string; display_name: string | null } | null;
 };
 
+const priorityBorder: Record<string, string> = {
+  high: "border-l-rose-400",
+  medium: "border-l-amber-400",
+  low: "border-l-emerald-400",
+};
+
+const assigneeColors = [
+  "bg-purple-500/20 text-purple-300",
+  "bg-blue-500/20 text-blue-300",
+  "bg-teal-500/20 text-teal-300",
+  "bg-orange-500/20 text-orange-300",
+];
+
+function avatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return assigneeColors[Math.abs(hash) % assigneeColors.length];
+}
+
 export function TaskCard({ task }: { task: Task }) {
   const supabase = createClient();
   const router = useRouter();
@@ -24,6 +43,7 @@ export function TaskCard({ task }: { task: Task }) {
   const [editing, setEditing] = useState(false);
 
   const done = optimistic === "done";
+  const borderAccent = task.priority ? (priorityBorder[task.priority] ?? "border-l-white/10") : "border-l-white/10";
 
   async function toggle(e: React.MouseEvent) {
     e.stopPropagation();
@@ -37,6 +57,11 @@ export function TaskCard({ task }: { task: Task }) {
   }
 
   const overdue = task.due_at && !done && new Date(task.due_at) < new Date();
+  const assigneeName = task.assignee?.display_name ?? null;
+  const initials = assigneeName
+    ? assigneeName.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2)
+    : "T";
+  const avatarCls = assigneeName ? avatarColor(assigneeName) : "bg-white/10 text-[var(--muted)]";
 
   return (
     <>
@@ -47,9 +72,9 @@ export function TaskCard({ task }: { task: Task }) {
         onKeyDown={(e) => {
           if (e.key === "Enter") setEditing(true);
         }}
-        className={`group relative cursor-pointer rounded-btn border border-white/5 bg-black/20 p-3 transition-all hover:bg-black/30 hover:border-white/10 ${
+        className={`group relative cursor-pointer rounded-xl border border-white/8 border-l-[3px] ${borderAccent} bg-black/20 p-3 transition-all hover:bg-black/30 hover:border-white/12 ${
           isPending ? "opacity-70" : ""
-        }`}
+        } ${done ? "opacity-60" : ""}`}
       >
         <div className="flex items-start gap-2.5">
           <button
@@ -57,8 +82,8 @@ export function TaskCard({ task }: { task: Task }) {
             aria-label={done ? "Markera som ej klar" : "Markera som klar"}
             className={`mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-[5px] border transition-all touch-manipulation ${
               done
-                ? "border-[var(--triad-teal)] bg-[var(--triad-teal)] text-black"
-                : "border-white/25 bg-transparent hover:border-[var(--triad-teal)]/60"
+                ? "border-teal-400 bg-teal-400 text-black"
+                : "border-white/25 bg-transparent hover:border-teal-400/60"
             }`}
           >
             {done && (
@@ -73,7 +98,9 @@ export function TaskCard({ task }: { task: Task }) {
               {task.title}
             </div>
             {task.description && (
-              <div className="mt-1 line-clamp-2 text-xs text-[var(--muted)]">{task.description}</div>
+              <div className={`mt-1 line-clamp-2 text-xs ${done ? "text-white/25" : "text-[var(--muted)]"}`}>
+                {task.description}
+              </div>
             )}
 
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -83,15 +110,13 @@ export function TaskCard({ task }: { task: Task }) {
                 </Chip>
               )}
               {task.project?.name && <Chip tone="teal">{task.project.name}</Chip>}
-              {task.assignee?.display_name ? (
-                <Chip tone="purple">{task.assignee.display_name}</Chip>
-              ) : (
-                <Chip tone="gray">Hela teamet</Chip>
-              )}
+              <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold shrink-0 ${avatarCls}`}>
+                {initials}
+              </span>
               {task.due_at && (
                 <span
                   className={`text-[11px] ${
-                    overdue ? "font-medium text-rose-300" : "text-[var(--muted)]"
+                    overdue ? "font-medium text-rose-300" : done ? "text-white/30" : "text-[var(--muted)]"
                   }`}
                 >
                   {overdue && "⚠ "}
