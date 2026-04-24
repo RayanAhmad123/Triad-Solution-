@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { Plus } from "lucide-react";
 import { TaskFormModal } from "./TaskForm";
 
 export function NewTaskButton() {
@@ -8,9 +9,10 @@ export function NewTaskButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="rounded-btn bg-[var(--triad-teal)] text-black px-4 py-2 text-sm font-medium hover:brightness-110"
+        className="rounded-btn bg-teal-500 hover:bg-teal-400 text-white px-4 py-2.5 text-sm font-semibold flex items-center gap-2 transition-colors shadow-sm shadow-teal-500/20"
       >
-        + Ny uppgift
+        <Plus size={16} />
+        Ny uppgift
       </button>
       {open && <TaskFormModal mode="create" onClose={() => setOpen(false)} />}
     </>

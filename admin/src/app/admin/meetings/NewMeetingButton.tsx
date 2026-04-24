@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { Plus } from "lucide-react";
 
 const PARTICIPANTS = ["Rayan", "Sahil", "Firas"];
 const TYPES = [
@@ -46,8 +47,9 @@ export function NewMeetingButton() {
 
   return (
     <>
-      <button onClick={() => setOpen(true)} className="rounded-btn bg-[var(--triad-teal)] text-black px-4 py-2 text-sm font-medium hover:brightness-110">
-        + Nytt möte
+      <button onClick={() => setOpen(true)} className="rounded-btn bg-teal-500 hover:bg-teal-400 text-white px-4 py-2.5 text-sm font-semibold flex items-center gap-2 transition-colors shadow-sm shadow-teal-500/20">
+        <Plus size={16} />
+        Nytt möte
       </button>
       {open && (
         <div className="fixed inset-0 bg-black/60 grid place-items-center z-50 p-4" onClick={() => setOpen(false)}>
