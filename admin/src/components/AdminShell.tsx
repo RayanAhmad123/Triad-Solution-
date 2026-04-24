@@ -38,7 +38,7 @@ export function AdminShell({
           </button>
           <div className="flex items-center gap-2 flex-1">
             <div className="h-6 w-6 rounded-md brand-gradient shadow shadow-teal-500/20" />
-            <span className="font-heading font-bold text-sm">Triad Admin</span>
+            <span className="font-heading font-bold text-sm truncate">Triad Admin</span>
           </div>
         </header>
 

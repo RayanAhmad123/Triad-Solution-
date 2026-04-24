@@ -81,7 +81,7 @@ export default async function TasksPage({
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
         {COLUMNS.map((col) => {
           const items = groups[col.key] ?? [];
           return (

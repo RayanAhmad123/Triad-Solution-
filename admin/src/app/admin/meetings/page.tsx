@@ -40,8 +40,8 @@ export default async function MeetingsPage({
         right={
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex rounded-btn border border-white/10 overflow-hidden text-xs">
-              <a href="?view=calendar" className={`px-3 py-2.5 ${view === "calendar" ? "bg-white/10" : "hover:bg-white/5"}`}>Kalender</a>
-              <a href="?view=list" className={`px-3 py-2.5 ${view === "list" ? "bg-white/10" : "hover:bg-white/5"}`}>Lista</a>
+              <a href="?view=calendar" className={`px-2.5 py-2 sm:px-3 sm:py-2.5 ${view === "calendar" ? "bg-white/10" : "hover:bg-white/5"}`}>Kalender</a>
+              <a href="?view=list" className={`px-2.5 py-2 sm:px-3 sm:py-2.5 ${view === "list" ? "bg-white/10" : "hover:bg-white/5"}`}>Lista</a>
             </div>
             {view === "list" && <SortSelect options={SORTS} defaultValue="date_asc" />}
             <NewMeetingButton />

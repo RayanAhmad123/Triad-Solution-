@@ -23,55 +23,61 @@ export function MeetingsCalendar({ meetings }: { meetings: Meeting[] }) {
   const todayIso = new Date().toISOString().slice(0, 10);
 
   return (
-    <div className="glass rounded-xl border border-white/10 p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="font-heading text-lg font-bold capitalize">{monthName}</h2>
-        <div className="flex gap-1">
+    <div className="glass rounded-xl border border-white/10 p-2 sm:p-4 w-full">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="font-heading text-sm sm:text-lg font-bold capitalize">{monthName}</h2>
+        <div className="flex gap-0.5 sm:gap-1">
           <button
             onClick={() => shift(-1)}
-            className="px-3 py-2 rounded-btn text-sm hover:bg-white/5 min-w-[40px] text-[var(--muted)] hover:text-white"
+            className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-btn text-sm hover:bg-white/5 text-[var(--muted)] hover:text-white"
           >
             ‹
           </button>
           <button
             onClick={() => setCursor(firstOfMonth(new Date()))}
-            className="px-3 py-2 rounded-btn text-sm hover:bg-white/5 text-[var(--muted)] hover:text-white"
+            className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-btn text-xs sm:text-sm hover:bg-white/5 text-[var(--muted)] hover:text-white"
           >
-            Idag
+            <span className="hidden sm:inline">Idag</span>
+            <span className="sm:hidden">•</span>
           </button>
           <button
             onClick={() => shift(1)}
-            className="px-3 py-2 rounded-btn text-sm hover:bg-white/5 min-w-[40px] text-[var(--muted)] hover:text-white"
+            className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-btn text-sm hover:bg-white/5 text-[var(--muted)] hover:text-white"
           >
             ›
           </button>
         </div>
       </div>
-      <div className="overflow-x-auto -mx-1">
-        <div className="min-w-[560px] px-1">
-          <div className="grid grid-cols-7 text-xs text-[var(--muted)] uppercase tracking-wider mb-2">
-            {["Mån","Tis","Ons","Tor","Fre","Lör","Sön"].map((d) => (
-              <div key={d} className="px-2 py-1 text-center">{d}</div>
-            ))}
-          </div>
-          <div className="grid grid-cols-7 gap-1">
-            {weeks.flat().map((d, i) => {
-              const iso = d.toISOString().slice(0, 10);
-              const items = byDay.get(iso) ?? [];
-              const inMonth = d.getMonth() === cursor.getMonth();
-              const today = iso === todayIso;
-              return (
-                <div
-                  key={i}
-                  className={`min-h-[92px] rounded-lg border p-1.5 text-xs transition-colors ${
-                    inMonth ? "border-white/8 bg-black/20" : "border-white/[0.03] bg-black/10 opacity-50"
-                  } ${today ? "ring-2 ring-teal-400 ring-offset-1 ring-offset-[var(--surface)]" : ""}`}
-                >
-                  <div className={`font-semibold mb-1 w-5 h-5 flex items-center justify-center rounded-full text-[11px] ${
-                    today ? "bg-teal-400 text-black" : "text-[var(--muted)]"
-                  }`}>
-                    {d.getDate()}
-                  </div>
+      <div className="w-full">
+        <div className="grid grid-cols-7 text-[10px] sm:text-xs text-[var(--muted)] uppercase tracking-wider mb-1 sm:mb-2">
+          {[
+            ["M","Mån"],["T","Tis"],["O","Ons"],["T","Tor"],["F","Fre"],["L","Lör"],["S","Sön"],
+          ].map(([short, full], i) => (
+            <div key={i} className="py-1 text-center">
+              <span className="sm:hidden">{short}</span>
+              <span className="hidden sm:inline">{full}</span>
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
+          {weeks.flat().map((d, i) => {
+            const iso = d.toISOString().slice(0, 10);
+            const items = byDay.get(iso) ?? [];
+            const inMonth = d.getMonth() === cursor.getMonth();
+            const today = iso === todayIso;
+            return (
+              <div
+                key={i}
+                className={`min-h-[48px] sm:min-h-[92px] rounded-md sm:rounded-lg border p-0.5 sm:p-1.5 text-xs transition-colors ${
+                  inMonth ? "border-white/8 bg-black/20" : "border-white/[0.03] bg-black/10 opacity-50"
+                } ${today ? "ring-1 sm:ring-2 ring-teal-400 ring-offset-1 ring-offset-[var(--surface)]" : ""}`}
+              >
+                <div className={`font-semibold w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center rounded-full text-[9px] sm:text-[11px] ${
+                  today ? "bg-teal-400 text-black" : "text-[var(--muted)]"
+                }`}>
+                  {d.getDate()}
+                </div>
+                <div className="hidden sm:block mt-1">
                   {items.slice(0, 3).map((m) => (
                     <div
                       key={m.id}
@@ -85,9 +91,17 @@ export function MeetingsCalendar({ meetings }: { meetings: Meeting[] }) {
                     <div className="text-[10px] text-[var(--muted)] pl-1">+{items.length - 3} till</div>
                   )}
                 </div>
-              );
-            })}
-          </div>
+                {items.length > 0 && (
+                  <div className="sm:hidden flex flex-wrap gap-0.5 mt-0.5">
+                    {items.slice(0, 2).map((m) => (
+                      <span key={m.id} className="h-1 w-1 rounded-full bg-teal-400 shrink-0" />
+                    ))}
+                    {items.length > 2 && <span className="h-1 w-1 rounded-full bg-teal-400/50 shrink-0" />}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

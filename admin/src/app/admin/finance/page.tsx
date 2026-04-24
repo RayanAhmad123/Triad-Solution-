@@ -85,7 +85,7 @@ function FinanceStat({ label, value, color }: { label: string; value: string; co
       <div className={`absolute left-0 top-0 bottom-0 w-1 ${c.accentBar}`} />
       <div className="pl-2">
         <div className="text-xs uppercase tracking-wider text-[var(--muted)]">{label}</div>
-        <div className={`font-heading text-3xl font-bold mt-2 ${c.numColor}`}>{value}</div>
+        <div className={`font-heading text-2xl sm:text-3xl font-bold mt-2 ${c.numColor}`}>{value}</div>
       </div>
     </div>
   );

@@ -34,7 +34,7 @@ export function NewProjectButton() {
         + Nytt projekt
       </button>
       {open && (
-        <div className="fixed inset-0 bg-black/60 grid place-items-center z-50" onClick={() => setOpen(false)}>
+        <div className="fixed inset-0 bg-black/60 grid place-items-center z-50 p-4" onClick={() => setOpen(false)}>
           <form onClick={(e) => e.stopPropagation()} onSubmit={submit} className="w-full max-w-md glass rounded-modal p-6 space-y-4">
             <h3 className="font-heading text-lg font-semibold">Nytt projekt</h3>
             <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Projektnamn" className="w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2" />

@@ -203,7 +203,7 @@ function StatCard({
         <Icon size={16} className={c.iconColor} />
       </div>
       <div className="text-xs uppercase tracking-wider text-[var(--muted)] pr-10 pl-2">{label}</div>
-      <div className="font-heading text-3xl font-bold mt-2 pl-2">{value}</div>
+      <div className="font-heading text-2xl sm:text-3xl font-bold mt-2 pl-2">{value}</div>
     </Link>
   );
 }
