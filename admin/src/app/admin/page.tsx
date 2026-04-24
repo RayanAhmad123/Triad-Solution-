@@ -60,7 +60,7 @@ export default async function OverviewPage() {
   return (
     <>
       <PageHeader title="Översikt" subtitle="Från idé till SaaS-bolag — Triad Solutions internt nav." />
-      <div className="grid gap-4 md:grid-cols-4 mb-8">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 mb-8">
         <StatCard label="Öppna uppgifter" value={tasksOpen.count ?? 0} href="/admin/tasks" />
         <StatCard label="Projekt" value={projects.count ?? 0} href="/admin/projects" />
         <StatCard label="Kommande möten" value={meetings.count ?? 0} href="/admin/meetings" />

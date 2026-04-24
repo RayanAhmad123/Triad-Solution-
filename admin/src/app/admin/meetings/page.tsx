@@ -38,7 +38,7 @@ export default async function MeetingsPage({
         title="Möten"
         subtitle="Möteslogg, agenda och kalendervy."
         right={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="flex rounded-btn border border-white/10 overflow-hidden text-xs">
               <a href="?view=calendar" className={`px-3 py-1.5 ${view === "calendar" ? "bg-white/10" : "hover:bg-white/5"}`}>Kalender</a>
               <a href="?view=list" className={`px-3 py-1.5 ${view === "list" ? "bg-white/10" : "hover:bg-white/5"}`}>Lista</a>
@@ -52,7 +52,8 @@ export default async function MeetingsPage({
         <MeetingsCalendar meetings={data ?? []} />
       ) : (
         <div className="glass rounded-card overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[560px]">
             <thead className="bg-white/[0.03] text-left text-[var(--muted)] text-xs uppercase tracking-wider">
               <tr>
                 <th className="p-3">Namn</th>
@@ -78,6 +79,7 @@ export default async function MeetingsPage({
               {!data?.length && <tr><td colSpan={5} className="p-8 text-center text-sm text-[var(--muted)]">Inga möten.</td></tr>}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </>

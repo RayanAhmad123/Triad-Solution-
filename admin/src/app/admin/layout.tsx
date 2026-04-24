@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { Sidebar } from "@/components/Sidebar";
+import { AdminShell } from "@/components/AdminShell";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = (await headers()).get("x-pathname") ?? "";
@@ -11,9 +11,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const { data: { user } } = await supabase.auth.getUser();
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar userEmail={user?.email ?? ""} />
-      <main className="flex-1 px-8 py-8">{children}</main>
-    </div>
+    <AdminShell userEmail={user?.email ?? ""}>
+      {children}
+    </AdminShell>
   );
 }

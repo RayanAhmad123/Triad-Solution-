@@ -45,7 +45,8 @@ export default async function CustomersPage({
         }
       />
       <div className="glass rounded-card overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[600px]">
           <thead className="bg-white/[0.03] text-left text-[var(--muted)] text-xs uppercase tracking-wider">
             <tr>
               <th className="p-3">Kund</th>
@@ -83,6 +84,7 @@ export default async function CustomersPage({
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </>
   );

@@ -21,14 +21,14 @@ export default async function FinancePage() {
   return (
     <>
       <PageHeader title="Ekonomi" subtitle="Utlägg, intäkter och fakturor." />
-      <div className="grid gap-4 md:grid-cols-3 mb-8">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-8">
         <Stat label="Intäkter" value={SEK(totalInc)} tone="green" />
         <Stat label="Utlägg" value={SEK(totalExp)} tone="red" />
         <Stat label="Netto" value={SEK(net)} tone={net >= 0 ? "teal" : "red"} />
       </div>
 
       <Section title="Utlägg">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm min-w-[540px]">
           <thead className="bg-white/[0.03] text-left text-[var(--muted)] text-xs uppercase tracking-wider">
             <tr><th className="p-3">Beskrivning</th><th className="p-3">Kategori</th><th className="p-3">Betald av</th><th className="p-3">Datum</th><th className="p-3">Belopp</th><th className="p-3">Status</th></tr>
           </thead>
@@ -42,7 +42,7 @@ export default async function FinancePage() {
       </Section>
 
       <Section title="Intäkter">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm min-w-[540px]">
           <thead className="bg-white/[0.03] text-left text-[var(--muted)] text-xs uppercase tracking-wider">
             <tr><th className="p-3">Beskrivning</th><th className="p-3">Källa</th><th className="p-3">Datum</th><th className="p-3">Belopp</th><th className="p-3">Status</th></tr>
           </thead>
@@ -56,7 +56,7 @@ export default async function FinancePage() {
       </Section>
 
       <Section title="Fakturor">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm min-w-[540px]">
           <thead className="bg-white/[0.03] text-left text-[var(--muted)] text-xs uppercase tracking-wider">
             <tr><th className="p-3">Fakturanummer</th><th className="p-3">Kund</th><th className="p-3">Utfärdad</th><th className="p-3">Förfaller</th><th className="p-3">Belopp</th><th className="p-3">Status</th></tr>
           </thead>
@@ -88,7 +88,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       <header className="px-5 py-3 border-b border-white/5 flex items-center justify-between">
         <h2 className="font-heading font-semibold">{title}</h2>
       </header>
-      {children}
+      <div className="overflow-x-auto">{children}</div>
     </section>
   );
 }
