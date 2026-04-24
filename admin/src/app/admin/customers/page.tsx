@@ -45,7 +45,7 @@ export default async function CustomersPage({
         }
       />
       <div className="glass rounded-card overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto scroll-x-hint">
         <table className="w-full text-sm min-w-[600px]">
           <thead className="bg-white/[0.03] text-left text-[var(--muted)] text-xs uppercase tracking-wider">
             <tr>

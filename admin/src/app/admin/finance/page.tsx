@@ -88,7 +88,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       <header className="px-5 py-3 border-b border-white/5 flex items-center justify-between">
         <h2 className="font-heading font-semibold">{title}</h2>
       </header>
-      <div className="overflow-x-auto">{children}</div>
+      <div className="overflow-x-auto scroll-x-hint">{children}</div>
     </section>
   );
 }

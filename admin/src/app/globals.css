@@ -41,3 +41,19 @@ h1, h2, h3, h4, h5 { font-family: "Montserrat", system-ui, sans-serif; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.16); }
+
+/* Scroll-hint: fades right edge on horizontally scrollable containers */
+.scroll-x-hint {
+  position: relative;
+}
+.scroll-x-hint::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 40px;
+  background: linear-gradient(to right, transparent, var(--bg));
+  pointer-events: none;
+  border-radius: inherit;
+}

@@ -55,7 +55,7 @@ export function TaskCard({ task }: { task: Task }) {
           <button
             onClick={toggle}
             aria-label={done ? "Markera som ej klar" : "Markera som klar"}
-            className={`mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[5px] border transition-all ${
+            className={`mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-[5px] border transition-all touch-manipulation ${
               done
                 ? "border-[var(--triad-teal)] bg-[var(--triad-teal)] text-black"
                 : "border-white/25 bg-transparent hover:border-[var(--triad-teal)]/60"
