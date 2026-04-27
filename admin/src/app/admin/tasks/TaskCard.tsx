@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { fmtDate } from "@/lib/date";
 import { Chip } from "@/components/Chip";
-import { TaskFormModal } from "./TaskForm";
+import { TaskDetailModal } from "./TaskDetailModal";
 
 export type Task = {
   id: string;
@@ -42,7 +42,7 @@ export function TaskCard({ task }: { task: Task }) {
   const router = useRouter();
   const [optimistic, setOptimistic] = useState(task.status);
   const [isPending, startTransition] = useTransition();
-  const [editing, setEditing] = useState(false);
+  const [viewing, setViewing] = useState(false);
 
   const done = optimistic === "done";
   const borderAccent = task.priority ? (priorityBorder[task.priority] ?? "border-l-white/10") : "border-l-white/10";
@@ -64,13 +64,14 @@ export function TaskCard({ task }: { task: Task }) {
   return (
     <>
       <div
-        onClick={() => setEditing(true)}
+        id={`task-${task.id}`}
+        onClick={() => setViewing(true)}
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {
-          if (e.key === "Enter") setEditing(true);
+          if (e.key === "Enter") setViewing(true);
         }}
-        className={`group relative cursor-pointer rounded-xl border border-white/8 border-l-[3px] ${borderAccent} bg-black/20 p-3 transition-all hover:bg-black/30 hover:border-white/12 ${
+        className={`task-anchor group relative cursor-pointer rounded-xl border border-white/8 border-l-[3px] ${borderAccent} bg-black/20 p-3 transition-all hover:bg-black/30 hover:border-white/12 scroll-mt-24 ${
           isPending ? "opacity-70" : ""
         } ${done ? "opacity-60" : ""}`}
       >
@@ -157,23 +158,7 @@ export function TaskCard({ task }: { task: Task }) {
         </div>
       </div>
 
-      {editing && (
-        <TaskFormModal
-          mode="edit"
-          onClose={() => setEditing(false)}
-          initial={{
-            id: task.id,
-            title: task.title,
-            description: task.description,
-            priority: task.priority ?? "medium",
-            start_at: task.start_at,
-            due_at: task.due_at,
-            status: task.status,
-            assignee_ids: assignees.map((a) => a.id),
-            project_id: task.project?.id ?? null,
-          }}
-        />
-      )}
+      {viewing && <TaskDetailModal task={task} onClose={() => setViewing(false)} />}
     </>
   );
 }
