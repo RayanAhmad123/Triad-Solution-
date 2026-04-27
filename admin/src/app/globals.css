@@ -57,3 +57,14 @@ h1, h2, h3, h4, h5 { font-family: "Montserrat", system-ui, sans-serif; }
   pointer-events: none;
   border-radius: inherit;
 }
+
+/* Highlight a task card when navigated to via #task-<id> anchor.
+   Used by the "Gå till projektet" button on the task detail modal. */
+@keyframes task-flash {
+  0%   { box-shadow: 0 0 0 0 rgba(0, 180, 168, 0.0); background-color: rgba(0, 180, 168, 0.12); }
+  20%  { box-shadow: 0 0 0 3px rgba(0, 180, 168, 0.65); background-color: rgba(0, 180, 168, 0.18); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 180, 168, 0.0); background-color: transparent; }
+}
+.task-anchor:target {
+  animation: task-flash 2.4s ease-out;
+}
