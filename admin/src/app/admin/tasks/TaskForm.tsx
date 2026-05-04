@@ -180,7 +180,7 @@ export function TaskFormModal({
               type="date"
               value={start}
               onChange={(e) => setStart(e.target.value)}
-              className="w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm"
+              className="w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm [color-scheme:dark]"
             />
           </Field>
 
@@ -189,7 +189,7 @@ export function TaskFormModal({
               type="date"
               value={due}
               onChange={(e) => setDue(e.target.value)}
-              className="w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm"
+              className="w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm [color-scheme:dark]"
             />
           </Field>
 
