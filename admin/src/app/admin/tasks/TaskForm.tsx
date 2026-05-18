@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Modal } from "@/components/Modal";
+import { DateInput } from "@/components/DateInput";
 
 export type TaskInput = {
   id?: string;
@@ -176,20 +177,20 @@ export function TaskFormModal({
           </Field>
 
           <Field label="Startdatum">
-            <input
-              type="date"
+            <DateInput
               value={start}
-              onChange={(e) => setStart(e.target.value)}
-              className="w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm [color-scheme:dark]"
+              onChange={setStart}
+              ariaLabel="Startdatum"
+              className="w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm"
             />
           </Field>
 
           <Field label="Deadline">
-            <input
-              type="date"
+            <DateInput
               value={due}
-              onChange={(e) => setDue(e.target.value)}
-              className="w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm [color-scheme:dark]"
+              onChange={setDue}
+              ariaLabel="Deadline"
+              className="w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm"
             />
           </Field>
 

@@ -1,7 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Menu } from "lucide-react";
 import { Sidebar } from "./Sidebar";
+
+const COLLAPSE_KEY = "triad-sidebar-collapsed";
 
 export function AdminShell({
   children,
@@ -11,6 +13,18 @@ export function AdminShell({
   userEmail: string;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
+
+  useEffect(() => {
+    if (localStorage.getItem(COLLAPSE_KEY) === "0") setCollapsed(false);
+  }, []);
+
+  const toggleCollapse = () =>
+    setCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem(COLLAPSE_KEY, next ? "1" : "0");
+      return next;
+    });
 
   return (
     <div className="flex min-h-screen">
@@ -25,6 +39,8 @@ export function AdminShell({
         userEmail={userEmail}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        collapsed={collapsed}
+        onToggleCollapse={toggleCollapse}
       />
 
       <div className="flex-1 min-w-0 flex flex-col">

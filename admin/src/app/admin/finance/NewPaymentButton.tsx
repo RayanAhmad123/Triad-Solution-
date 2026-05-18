@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Plus } from "lucide-react";
 import { Modal } from "@/components/Modal";
+import { DateInput } from "@/components/DateInput";
 
 type Profile = { id: string; display_name: string | null; email: string | null };
 
@@ -74,6 +75,13 @@ export function NewPaymentButton({ profiles }: { profiles: Profile[] }) {
     return { value: f[k], onChange: (e: any) => setF((p) => ({ ...p, [k]: e.target.value })) };
   }
 
+  function bindDate<K extends keyof typeof f>(k: K) {
+    return {
+      value: (f[k] as string) ?? "",
+      onChange: (v: string) => setF((p) => ({ ...p, [k]: v })),
+    };
+  }
+
   return (
     <>
       <button
@@ -121,9 +129,9 @@ export function NewPaymentButton({ profiles }: { profiles: Profile[] }) {
                   </option>
                 ))}
               </select>
-              <input
-                {...bind("due_date")}
-                type="date"
+              <DateInput
+                {...bindDate("due_date")}
+                ariaLabel="Förfallodag"
                 className="rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm"
               />
               <select

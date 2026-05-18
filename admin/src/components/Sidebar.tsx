@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, CheckSquare, FolderKanban, Calendar, Users, FileText,
   Wallet, Palette, BookTemplate, BarChart3, LogOut, X,
+  PanelLeftClose, PanelLeftOpen,
 } from "lucide-react";
 
 const nav = [
@@ -23,31 +24,44 @@ export function Sidebar({
   userEmail,
   isOpen = false,
   onClose,
+  collapsed = false,
+  onToggleCollapse,
 }: {
   userEmail: string;
   isOpen?: boolean;
   onClose?: () => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }) {
   const pathname = usePathname();
+  // `collapsed` is a desktop-only concept — the mobile drawer always shows the
+  // full-width sidebar. So every collapse-driven class is scoped with `lg:`.
+  const hideWhenCollapsed = collapsed ? "lg:hidden" : "";
+
   return (
     <aside
       className={`
         fixed inset-y-0 left-0 z-50 w-64 shrink-0 border-r border-white/8 bg-[var(--surface)] backdrop-blur flex flex-col
-        transition-transform duration-300 ease-in-out
+        transition-all duration-300 ease-in-out
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
         lg:static lg:translate-x-0 lg:h-screen lg:sticky lg:top-0
+        ${collapsed ? "lg:w-20" : "lg:w-64"}
       `}
     >
       {/* Logo */}
-      <div className="px-5 py-5 flex items-center justify-between gap-3 border-b border-white/5">
-        <div className="flex items-center gap-3">
+      <div
+        className={`px-5 py-5 flex items-center gap-3 border-b border-white/5 ${
+          collapsed ? "lg:justify-center lg:px-0" : "justify-between"
+        }`}
+      >
+        <div className="flex items-center gap-3 min-w-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/admin/logos/Logo_White_Icon.png"
             alt="Triad"
-            className="h-9 w-9 object-contain"
+            className="h-9 w-9 object-contain shrink-0"
           />
-          <div>
+          <div className={hideWhenCollapsed}>
             <div className="font-heading font-bold tracking-tight text-base">Triad</div>
             <div className="text-[10px] uppercase tracking-widest text-[var(--muted)]">Admin</div>
           </div>
@@ -76,7 +90,10 @@ export function Sidebar({
               <Link
                 href={item.href}
                 onClick={onClose}
+                title={item.label}
                 className={`relative flex items-center gap-3 px-3 py-2.5 rounded-btn text-sm transition-colors overflow-hidden ${
+                  collapsed ? "lg:justify-center lg:px-0" : ""
+                } ${
                   active
                     ? "bg-white/10 text-white font-medium"
                     : "text-[var(--muted)] hover:text-white hover:bg-white/5"
@@ -87,9 +104,9 @@ export function Sidebar({
                 )}
                 <Icon
                   size={16}
-                  className={active ? "text-teal-400" : "text-[var(--muted)]"}
+                  className={`shrink-0 ${active ? "text-teal-400" : "text-[var(--muted)]"}`}
                 />
-                {item.label}
+                <span className={hideWhenCollapsed}>{item.label}</span>
               </Link>
               {dividerAfter && (
                 <div className="my-2 mx-3 border-t border-white/5" />
@@ -99,15 +116,41 @@ export function Sidebar({
         })}
       </nav>
 
+      {/* Collapse toggle — desktop only */}
+      {onToggleCollapse && (
+        <button
+          onClick={onToggleCollapse}
+          title={collapsed ? "Expandera meny" : "Fäll ihop meny"}
+          aria-label={collapsed ? "Expandera meny" : "Fäll ihop meny"}
+          className={`hidden lg:flex items-center gap-3 mx-2 mb-1 px-3 py-2.5 rounded-btn text-sm text-[var(--muted)] hover:text-white hover:bg-white/5 transition-colors ${
+            collapsed ? "lg:justify-center lg:px-0" : ""
+          }`}
+        >
+          {collapsed ? (
+            <PanelLeftOpen size={16} className="shrink-0" />
+          ) : (
+            <>
+              <PanelLeftClose size={16} className="shrink-0" />
+              <span>Fäll ihop</span>
+            </>
+          )}
+        </button>
+      )}
+
       {/* User / Logout */}
       <form action="/admin/auth/signout" method="post" className="border-t border-white/5 p-3">
-        <div className="text-xs text-[var(--muted)] px-2 py-1 truncate">{userEmail}</div>
+        <div className={`text-xs text-[var(--muted)] px-2 py-1 truncate ${hideWhenCollapsed}`}>
+          {userEmail}
+        </div>
         <button
           type="submit"
-          className="w-full flex items-center gap-2 px-3 py-2.5 rounded-btn text-sm text-[var(--muted)] hover:text-white hover:bg-white/5"
+          title="Logga ut"
+          className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-btn text-sm text-[var(--muted)] hover:text-white hover:bg-white/5 ${
+            collapsed ? "lg:justify-center lg:px-0" : ""
+          }`}
         >
-          <LogOut size={16} />
-          Logga ut
+          <LogOut size={16} className="shrink-0" />
+          <span className={hideWhenCollapsed}>Logga ut</span>
         </button>
       </form>
     </aside>

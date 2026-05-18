@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Repeat } from "lucide-react";
 import { Modal } from "@/components/Modal";
+import { DateInput } from "@/components/DateInput";
 
 type Profile = { id: string; display_name: string | null; email: string | null };
 
@@ -73,6 +74,13 @@ export function NewRecurringButton({ profiles }: { profiles: Profile[] }) {
     };
   }
 
+  function bindDate<K extends keyof typeof f>(k: K) {
+    return {
+      value: (f[k] as string) ?? "",
+      onChange: (v: string) => setF((p) => ({ ...p, [k]: v })),
+    };
+  }
+
   return (
     <>
       <button
@@ -130,25 +138,25 @@ export function NewRecurringButton({ profiles }: { profiles: Profile[] }) {
               </select>
               <label className="text-xs text-[var(--muted)]">
                 Nästa förfallodag
-                <input
-                  {...bind("next_due_date")}
-                  type="date"
+                <DateInput
+                  {...bindDate("next_due_date")}
+                  ariaLabel="Nästa förfallodag"
                   className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm text-white"
                 />
               </label>
               <label className="text-xs text-[var(--muted)]">
                 Startdatum
-                <input
-                  {...bind("start_date")}
-                  type="date"
+                <DateInput
+                  {...bindDate("start_date")}
+                  ariaLabel="Startdatum"
                   className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm text-white"
                 />
               </label>
               <label className="text-xs text-[var(--muted)] col-span-2">
                 Slutdatum (valfritt)
-                <input
-                  {...bind("end_date")}
-                  type="date"
+                <DateInput
+                  {...bindDate("end_date")}
+                  ariaLabel="Slutdatum"
                   className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm text-white"
                 />
               </label>

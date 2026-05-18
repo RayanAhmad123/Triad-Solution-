@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Plus } from "lucide-react";
 import { TaskCard, type Task } from "@/app/admin/tasks/TaskCard";
+import { DateInput } from "@/components/DateInput";
 
 export type ProjectTask = {
   id: string;
@@ -150,19 +151,19 @@ export function ProjectTaskList({
           <div className="grid grid-cols-2 gap-2">
             <label className="text-[10px] text-[var(--muted)] uppercase tracking-wider">
               Start
-              <input
-                type="date"
+              <DateInput
                 value={f.start_at}
-                onChange={(e) => setF((p) => ({ ...p, start_at: e.target.value }))}
+                onChange={(v) => setF((p) => ({ ...p, start_at: v }))}
+                ariaLabel="Startdatum"
                 className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-2 py-2 text-xs text-white"
               />
             </label>
             <label className="text-[10px] text-[var(--muted)] uppercase tracking-wider">
               Deadline
-              <input
-                type="date"
+              <DateInput
                 value={f.due_at}
-                onChange={(e) => setF((p) => ({ ...p, due_at: e.target.value }))}
+                onChange={(v) => setF((p) => ({ ...p, due_at: v }))}
+                ariaLabel="Deadline"
                 className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-2 py-2 text-xs text-white"
               />
             </label>
