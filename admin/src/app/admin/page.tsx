@@ -3,9 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 import { fmtDate, fmtDateTime } from "@/lib/date";
 import { PageHeader } from "@/components/PageHeader";
 import { Chip } from "@/components/Chip";
-import { CheckCircle2, CheckSquare, FolderKanban, Calendar, Users, ChevronRight } from "lucide-react";
+import { CheckCircle2, CheckSquare, FolderKanban, Calendar, Users } from "lucide-react";
 import { DashboardTaskRow } from "./DashboardTaskRow";
 import type { Task as TaskCardTask } from "./tasks/TaskCard";
+import { WorkloadDonut } from "@/components/WorkloadDonut";
+import { ProjectTimeline, type TimelineTask } from "./projects/[id]/ProjectTimeline";
 
 export const dynamic = "force-dynamic";
 
@@ -47,13 +49,11 @@ export default async function OverviewPage() {
 
   const taskFields =
     "id,title,description,status,priority,start_at,due_at,assignee_ids,project:projects(id,name)";
-  const [tasksOpen, tasksMine, projects, meetings, customers, profilesData] = await Promise.all([
+  const [openTasksData, tasksMine, projects, meetings, customers, profilesData] = await Promise.all([
     supabase
       .from("tasks")
-      .select(taskFields, { count: "exact" })
-      .neq("status", "done")
-      .order("due_at", { ascending: true, nullsFirst: false })
-      .limit(8),
+      .select("assignee_ids", { count: "exact" })
+      .neq("status", "done"),
     user
       ? supabase
           .from("tasks")
@@ -85,15 +85,43 @@ export default async function OverviewPage() {
         .filter(Boolean) as Array<{ id: string; display_name: string | null }>,
     }));
 
-  const openTasks = hydrate(tasksOpen.data ?? []);
   const myTasks = hydrate(tasksMine.data ?? []);
   const upcomingMeetings = (meetings.data ?? []) as unknown as MeetingRow[];
+
+  // Team workload — count of open tasks carried by each member. A task with
+  // several assignees counts toward each of them.
+  const workloadCounts = new Map<string, number>();
+  let unassignedCount = 0;
+  for (const row of (openTasksData.data ?? []) as Array<{ assignee_ids: string[] | null }>) {
+    const ids = row.assignee_ids ?? [];
+    if (ids.length === 0) unassignedCount++;
+    else ids.forEach((id) => workloadCounts.set(id, (workloadCounts.get(id) ?? 0) + 1));
+  }
+  const workloadSegments = [...profileById.values()]
+    .map((p) => ({ label: p.display_name ?? "Okänd", value: workloadCounts.get(p.id) ?? 0 }))
+    .filter((s) => s.value > 0)
+    .sort((a, b) => b.value - a.value);
+  if (unassignedCount > 0) workloadSegments.push({ label: "Ej tilldelad", value: unassignedCount });
+
+  // Timeline of the logged-in user's own tasks. A task with both a start and a
+  // due date renders as a bar; one with only a single date renders as a point.
+  const myTimelineTasks: TimelineTask[] = myTasks
+    .filter((t) => t.start_at || t.due_at)
+    .map((t) => ({
+      id: t.id,
+      title: t.title,
+      status: t.status,
+      priority: t.priority,
+      start: (t.start_at ?? t.due_at)!,
+      end: t.start_at && t.due_at ? t.due_at : null,
+      due_at: t.due_at,
+    }));
 
   return (
     <>
       <PageHeader title="Översikt" subtitle="Från idé till SaaS-bolag — Triad Solutions internt nav." />
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4 mb-8">
-        <StatCard label="Öppna uppgifter" value={tasksOpen.count ?? 0} href="/admin/tasks" icon={CheckSquare} color="teal" />
+        <StatCard label="Öppna uppgifter" value={openTasksData.count ?? 0} href="/admin/tasks" icon={CheckSquare} color="teal" />
         <StatCard label="Projekt" value={projects.count ?? 0} href="/admin/projects" icon={FolderKanban} color="purple" />
         <StatCard label="Kommande möten" value={meetings.count ?? 0} href="/admin/meetings" icon={Calendar} color="amber" />
         <StatCard label="Kunder" value={customers.count ?? 0} href="/admin/customers" icon={Users} color="emerald" />
@@ -163,66 +191,19 @@ export default async function OverviewPage() {
 
         <section className="lg:col-span-2 glass rounded-xl border border-white/10 p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-heading font-semibold">Teamets kommande uppgifter</h2>
+            <h2 className="font-heading font-semibold">Teamets arbetsbelastning</h2>
             <Link href="/admin/tasks" className="text-xs text-[var(--muted)] hover:text-white">
               Kanban →
             </Link>
           </div>
-          <ul className="divide-y divide-white/5">
-            {openTasks.map((t) => {
-              const assignees = t.assignees ?? [];
-              return (
-                <li key={t.id}>
-                  <DashboardTaskRow
-                    task={toCardTask(t)}
-                    className="py-2.5 flex flex-col gap-1 text-sm group hover:bg-white/[0.03] -mx-5 px-5 transition-colors"
-                  >
-                    <span className="truncate font-medium">{t.title}</span>
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      {assignees.length > 0 ? (
-                      <span className="inline-flex items-center -space-x-1.5">
-                        {assignees.slice(0, 3).map((a, i) => {
-                          const name = a.display_name ?? "?";
-                          const initials = name
-                            .split(" ")
-                            .map((w: string) => w[0])
-                            .join("")
-                            .toUpperCase()
-                            .slice(0, 2);
-                          return (
-                            <span
-                              key={i}
-                              title={name}
-                              className="h-5 w-5 rounded-full bg-purple-500/20 text-purple-300 text-[10px] flex items-center justify-center font-semibold shrink-0 ring-2 ring-[var(--surface)]"
-                            >
-                              {initials}
-                            </span>
-                          );
-                        })}
-                      </span>
-                    ) : (
-                      <span
-                        title="Ingen tilldelad"
-                        className="h-5 w-5 rounded-full bg-white/10 text-[var(--muted)] text-[10px] flex items-center justify-center font-semibold shrink-0"
-                      >
-                        T
-                      </span>
-                    )}
-                    {t.priority && (
-                      <Chip tone={t.priority === "high" ? "red" : t.priority === "medium" ? "yellow" : "gray"}>
-                        {t.priority === "high" ? "Hög" : t.priority === "medium" ? "Medel" : "Låg"}
-                      </Chip>
-                    )}
-                    <Chip tone={statusTone(t.status)}>{t.status}</Chip>
-                  </div>
-                  </DashboardTaskRow>
-                </li>
-              );
-            })}
-            {!openTasks.length && (
-              <li className="py-6 text-sm text-[var(--muted)]">Inga öppna uppgifter.</li>
-            )}
-          </ul>
+          <WorkloadDonut segments={workloadSegments} />
+
+          <div className="mt-6 pt-5 border-t border-white/5">
+            <h3 className="text-xs uppercase tracking-wider text-[var(--muted)] mb-3">
+              Min tidslinje
+            </h3>
+            <ProjectTimeline tasks={myTimelineTasks} />
+          </div>
         </section>
 
         <section className="lg:col-span-3 glass rounded-xl border border-white/10 p-5">

@@ -1,4 +1,4 @@
-import { fmtDate } from "@/lib/date";
+import { fmtMonthDay } from "@/lib/date";
 
 export type TimelineTask = {
   id: string;
@@ -108,10 +108,9 @@ export function ProjectTimeline({
             t.status !== "done" && t.due_at && new Date(t.due_at).getTime() < now;
           const barColor = overdue ? "bg-rose-400" : STATUS_COLOR[t.status] ?? "bg-white/30";
 
-          // For narrow bars there isn't room for both labels — hide both
-          // when the bar is tiny, show only the start when it's medium.
-          const showBothLabels = width >= 18;
-          const showStartOnly = !showBothLabels && width >= 9;
+          // Both the from and to dates always render. Wide bars fit the
+          // labels inside; narrow bars place them just outside the bar edges.
+          const showInsideLabels = width >= 18;
 
           return (
             <div key={t.id} className="contents">
@@ -140,30 +139,43 @@ export function ProjectTimeline({
                   <div
                     className={`absolute top-1/2 -translate-y-1/2 h-3 w-3 rounded-full ring-2 ring-black/40 ${barColor}`}
                     style={{ left: `calc(${left}% - 6px)` }}
-                    title={fmtDate(startTs)}
+                    title={fmtMonthDay(startTs)}
                   />
                 ) : (
-                  <div
-                    className={`absolute top-1/2 -translate-y-1/2 h-6 rounded-md flex items-center justify-between gap-2 px-2 overflow-hidden ${barColor}`}
-                    style={{ left: `${left}%`, width: `${width}%` }}
-                    title={`${fmtDate(startTs)} → ${fmtDate(endTs!)}`}
-                  >
-                    {showBothLabels && (
+                  <>
+                    <div
+                      className={`absolute top-1/2 -translate-y-1/2 h-6 rounded-md flex items-center justify-between gap-2 px-2 overflow-hidden ${barColor}`}
+                      style={{ left: `${left}%`, width: `${width}%` }}
+                      title={`${fmtMonthDay(startTs)} → ${fmtMonthDay(endTs!)}`}
+                    >
+                      {showInsideLabels && (
+                        <>
+                          <span className="text-[10px] font-medium text-black/80 whitespace-nowrap">
+                            {fmtMonthDay(startTs)}
+                          </span>
+                          <span className="text-[10px] font-medium text-black/80 whitespace-nowrap">
+                            {fmtMonthDay(endTs!)}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    {!showInsideLabels && (
                       <>
-                        <span className="text-[10px] font-medium text-black/80 whitespace-nowrap">
-                          {fmtDate(startTs)}
+                        <span
+                          className="absolute top-1/2 -translate-y-1/2 -translate-x-full pr-1 text-[10px] font-medium text-[var(--muted)] whitespace-nowrap"
+                          style={{ left: `${left}%` }}
+                        >
+                          {fmtMonthDay(startTs)}
                         </span>
-                        <span className="text-[10px] font-medium text-black/80 whitespace-nowrap">
-                          {fmtDate(endTs!)}
+                        <span
+                          className="absolute top-1/2 -translate-y-1/2 pl-1 text-[10px] font-medium text-[var(--muted)] whitespace-nowrap"
+                          style={{ left: `${left + width}%` }}
+                        >
+                          {fmtMonthDay(endTs!)}
                         </span>
                       </>
                     )}
-                    {showStartOnly && (
-                      <span className="text-[10px] font-medium text-black/80 whitespace-nowrap">
-                        {fmtDate(startTs)}
-                      </span>
-                    )}
-                  </div>
+                  </>
                 )}
               </div>
             </div>
@@ -205,9 +217,8 @@ function Legend({ color, label, line }: { color: string; label: string; line?: b
 
 /**
  * Pick reasonable date ticks for the visible range. Granularity adapts so we
- * roughly aim for 5–8 ticks across the chart:
- *   < 30 days  → daily ticks every few days
- *   < 4 months → weekly ticks (Mondays)
+ * roughly aim for 5–12 ticks across the chart:
+ *   < 1 year   → weekly ticks anchored on Mondays (each segment = Mon–Sun week)
  *   < 2 years  → monthly ticks (1st of month)
  *   else       → quarterly ticks
  */
@@ -215,30 +226,26 @@ function generateTicks(min: number, max: number): { timestamp: number; label: st
   const days = (max - min) / MS_DAY;
   const out: { timestamp: number; label: string }[] = [];
 
-  if (days < 30) {
-    const step = Math.max(1, Math.ceil(days / 7));
-    const cursor = startOfDay(new Date(min));
-    while (cursor.getTime() <= max) {
-      if (cursor.getTime() >= min) {
-        out.push({ timestamp: cursor.getTime(), label: fmtDate(cursor) });
-      }
-      cursor.setDate(cursor.getDate() + step);
-    }
-  } else if (days < 120) {
+  if (days < 365) {
+    // Every tick lands on a Monday, so the chart reads as Mon–Sun weeks.
+    // For longer spans we keep whole-week steps rather than skipping arbitrary
+    // days, so labels stay week-aligned.
+    const weekStep = Math.max(1, Math.ceil(days / 7 / 12));
     const cursor = mondayOf(new Date(min));
-    const step = days < 60 ? 1 : 2; // every week or every other week
+    let week = 0;
     while (cursor.getTime() <= max) {
-      if (cursor.getTime() >= min) {
-        out.push({ timestamp: cursor.getTime(), label: fmtDate(cursor) });
+      if (cursor.getTime() >= min && week % weekStep === 0) {
+        out.push({ timestamp: cursor.getTime(), label: fmtMonthDay(cursor) });
       }
-      cursor.setDate(cursor.getDate() + 7 * step);
+      cursor.setDate(cursor.getDate() + 7);
+      week++;
     }
   } else if (days < 365 * 2) {
     const cursor = firstOfMonth(new Date(min));
     const step = days < 240 ? 1 : 2;
     while (cursor.getTime() <= max) {
       if (cursor.getTime() >= min) {
-        out.push({ timestamp: cursor.getTime(), label: fmtDate(cursor) });
+        out.push({ timestamp: cursor.getTime(), label: fmtMonthDay(cursor) });
       }
       cursor.setMonth(cursor.getMonth() + step);
     }

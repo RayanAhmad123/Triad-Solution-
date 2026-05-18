@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { FileText } from "lucide-react";
 import { Modal } from "@/components/Modal";
+import { DateInput } from "@/components/DateInput";
 
 export function NewInvoiceButton() {
   const supabase = createClient();
@@ -72,6 +73,13 @@ export function NewInvoiceButton() {
     return { value: f[k], onChange: (e: any) => setF((p) => ({ ...p, [k]: e.target.value })) };
   }
 
+  function bindDate<K extends keyof typeof f>(k: K) {
+    return {
+      value: (f[k] as string) ?? "",
+      onChange: (v: string) => setF((p) => ({ ...p, [k]: v })),
+    };
+  }
+
   return (
     <>
       <button
@@ -120,17 +128,17 @@ export function NewInvoiceButton() {
               </select>
               <label className="text-xs text-[var(--muted)]">
                 Utfärdad
-                <input
-                  {...bind("issued_at")}
-                  type="date"
+                <DateInput
+                  {...bindDate("issued_at")}
+                  ariaLabel="Utfärdad"
                   className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm text-white"
                 />
               </label>
               <label className="text-xs text-[var(--muted)]">
                 Förfaller
-                <input
-                  {...bind("due_date")}
-                  type="date"
+                <DateInput
+                  {...bindDate("due_date")}
+                  ariaLabel="Förfaller"
                   className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm text-white"
                 />
               </label>

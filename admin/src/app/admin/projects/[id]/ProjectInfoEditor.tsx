@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Pencil, Check, X, ExternalLink } from "lucide-react";
 import { fmtDate } from "@/lib/date";
+import { DateInput } from "@/components/DateInput";
 
 type Profile = { id: string; display_name: string | null; email: string | null };
 type Customer = { id: string; name: string };
@@ -143,18 +144,18 @@ export function ProjectInfoEditor({
       </Field>
       <div className="grid grid-cols-2 gap-2">
         <Field label="Start">
-          <input
-            type="date"
+          <DateInput
             value={f.start_date}
-            onChange={(e) => setF((p) => ({ ...p, start_date: e.target.value }))}
+            onChange={(v) => setF((p) => ({ ...p, start_date: v }))}
+            ariaLabel="Startdatum"
             className="w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm text-white"
           />
         </Field>
         <Field label="Slut">
-          <input
-            type="date"
+          <DateInput
             value={f.end_date}
-            onChange={(e) => setF((p) => ({ ...p, end_date: e.target.value }))}
+            onChange={(v) => setF((p) => ({ ...p, end_date: v }))}
+            ariaLabel="Slutdatum"
             className="w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm text-white"
           />
         </Field>

@@ -11,6 +11,14 @@ export function fmtDate(d: string | number | Date | null | undefined): string {
   return `${dd}/${mm}/${yy}`;
 }
 
+// "18 maj" — month + day only, no year. Used for calendar/timeline labels.
+export function fmtMonthDay(d: string | number | Date | null | undefined): string {
+  if (d == null || d === "") return "—";
+  const date = d instanceof Date ? d : new Date(d);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString("sv-SE", { day: "numeric", month: "short" });
+}
+
 // dd/mm/yy HH:mm — for timestamps where time-of-day matters (meetings, etc).
 export function fmtDateTime(d: string | number | Date | null | undefined): string {
   if (d == null || d === "") return "—";
