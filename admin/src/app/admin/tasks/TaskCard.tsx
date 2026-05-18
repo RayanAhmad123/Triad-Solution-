@@ -1,5 +1,5 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { fmtDate } from "@/lib/date";
@@ -41,6 +41,7 @@ export function TaskCard({ task }: { task: Task }) {
   const supabase = createClient();
   const router = useRouter();
   const [optimistic, setOptimistic] = useState(task.status);
+  useEffect(() => setOptimistic(task.status), [task.status]);
   const [isPending, startTransition] = useTransition();
   const [viewing, setViewing] = useState(false);
 

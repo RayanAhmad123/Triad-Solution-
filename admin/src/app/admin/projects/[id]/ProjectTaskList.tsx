@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Plus } from "lucide-react";
@@ -48,6 +48,32 @@ export function ProjectTaskList({
     due_at: "",
     assignee_ids: [] as string[],
   });
+  const [tasks, setTasks] = useState<ProjectTask[]>(initial);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverCol, setDragOverCol] = useState<string | null>(null);
+
+  useEffect(() => {
+    setTasks(initial);
+  }, [initial]);
+
+  async function moveTask(taskId: string, toStatus: string) {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task || task.status === toStatus) return;
+    const completed_at = toStatus === "done" ? new Date().toISOString() : null;
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, status: toStatus, completed_at } : t)),
+    );
+    const { error } = await supabase
+      .from("tasks")
+      .update({ status: toStatus, completed_at })
+      .eq("id", taskId);
+    if (error) {
+      alert(error.message);
+      setTasks(initial);
+      return;
+    }
+    router.refresh();
+  }
 
   function toggleAssignee(id: string) {
     setF((p) => ({
@@ -91,7 +117,7 @@ export function ProjectTaskList({
 
   // Group by status for column-style display
   const groups: Record<string, ProjectTask[]> = { not_started: [], in_progress: [], done: [] };
-  for (const t of initial) {
+  for (const t of tasks) {
     (groups[t.status] ??= []).push(t);
   }
 
@@ -201,8 +227,28 @@ export function ProjectTaskList({
       <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
         {COLUMNS.map((col) => {
           const items = groups[col.key] ?? [];
+          const isOver = dragOverCol === col.key;
           return (
-            <section key={col.key} className="rounded-card bg-black/15 p-3">
+            <section
+              key={col.key}
+              onDragOver={(e) => {
+                if (!dragId) return;
+                e.preventDefault();
+                if (dragOverCol !== col.key) setDragOverCol(col.key);
+              }}
+              onDragLeave={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverCol(null);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (dragId) moveTask(dragId, col.key);
+                setDragId(null);
+                setDragOverCol(null);
+              }}
+              className={`rounded-card bg-black/15 p-3 transition-colors ${
+                isOver ? "bg-teal-500/10 ring-1 ring-teal-400/40" : ""
+              }`}
+            >
               <div className="mb-2 flex items-center gap-2">
                 <span className={`h-2 w-2 rounded-full ${col.accent}`} />
                 <h3 className="text-xs font-semibold uppercase tracking-wider">{col.label}</h3>
@@ -212,13 +258,27 @@ export function ProjectTaskList({
               </div>
               <ul className="space-y-2">
                 {items.map((t) => (
-                  <li key={t.id}>
+                  <li
+                    key={t.id}
+                    draggable
+                    onDragStart={(e) => {
+                      setDragId(t.id);
+                      e.dataTransfer.effectAllowed = "move";
+                    }}
+                    onDragEnd={() => {
+                      setDragId(null);
+                      setDragOverCol(null);
+                    }}
+                    className={`cursor-grab active:cursor-grabbing ${
+                      dragId === t.id ? "opacity-40" : ""
+                    }`}
+                  >
                     <TaskCard task={taskToCardTask(t)} />
                   </li>
                 ))}
                 {!items.length && (
                   <li className="rounded-btn border border-dashed border-white/5 py-6 text-center text-[11px] text-[var(--muted)]">
-                    Inget här.
+                    {isOver ? "Släpp här" : "Inget här."}
                   </li>
                 )}
               </ul>
