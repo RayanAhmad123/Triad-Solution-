@@ -1,29 +1,27 @@
-// Genererar en branded PDF av en offert. Layout speglar Excel-mallen så att
-// utskick blir konsekvent oavsett format. Använder pdfkit (server-only).
+// Genererar en branded PDF av en offert med pdf-lib (Helvetica är inbyggd i
+// PDF-standarden, inga filsystem-beroenden — fungerar serverless).
 //
-// pdfkit har inga Calibri-fonts inbyggda — vi använder Helvetica som täcker
-// åäö korrekt via WinAnsi. Färger och struktur följer offer-xlsx.ts.
+// pdf-lib använder bottom-up y-axel; vi håller intern "cursor" som top-down och
+// konverterar i drawText/drawRect.
 
-import PDFDocument from "pdfkit";
+import { PDFDocument, PDFFont, PDFImage, PDFPage, StandardFonts, rgb } from "pdf-lib";
 import fs from "node:fs/promises";
 import path from "node:path";
 
-const BRAND = "#00B4A8";
-const DARK = "#0A2540";
-const LIGHT = "#F5F5F7";
-const GREY = "#636366";
-const ROSE = "#B91C1C";
-const TEXT = "#000000";
-
-const FONT = "Helvetica";
-const FONT_BOLD = "Helvetica-Bold";
-const FONT_ITALIC = "Helvetica-Oblique";
-
-// A4 portrait
-const PAGE_W = 595.28;
-const PAGE_H = 841.89;
+const A4_W = 595.28;
+const A4_H = 841.89;
 const MARGIN = 32;
-const CONTENT_W = PAGE_W - MARGIN * 2;
+const CONTENT_W = A4_W - MARGIN * 2;
+
+// Färger (pdf-lib: rgb 0–1)
+const BRAND  = rgb(0/255,   180/255, 168/255); // #00B4A8
+const DARK   = rgb(10/255,  37/255,  64/255);  // #0A2540
+const LIGHT  = rgb(245/255, 245/255, 247/255); // #F5F5F7
+const GREY   = rgb(99/255,  99/255,  102/255); // #636366
+const ROSE   = rgb(185/255, 28/255,  28/255);  // #B91C1C
+const WHITE  = rgb(1, 1, 1);
+const BLACK  = rgb(0, 0, 0);
+const BORDER = rgb(213/255, 213/255, 218/255); // #D5D5DA
 
 export type OfferData = {
   offer_number: string | null;
@@ -52,401 +50,521 @@ function fmtDateSv(d: string | null | undefined): string {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("sv-SE");
 }
-
 function fmtMoney(n: number): string {
   return new Intl.NumberFormat("sv-SE", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(n);
 }
-
 function clampPct(n: number): number {
   if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.min(100, n));
 }
 
+// pdf-lib's WinAnsi-kodning täcker latin1 inklusive åäö men inte t.ex. emoji.
+// Strippa karaktärer som inte kan kodas så vi inte kastar fel mitt i render.
+const SUPPORTED = /[\x00-\x7E\xA0-\xFFŒœŠšŽžŸ–—‘’“”†‡•…‰‹›€™]/;
+function safe(text: string): string {
+  let out = "";
+  for (const ch of text) out += SUPPORTED.test(ch) ? ch : "?";
+  return out;
+}
+
+type DrawOpts = {
+  font?: PDFFont;
+  size?: number;
+  color?: ReturnType<typeof rgb>;
+  width?: number;
+  align?: "left" | "center" | "right";
+};
+
+class Pdf {
+  doc: PDFDocument;
+  page: PDFPage;
+  font: PDFFont;
+  fontBold: PDFFont;
+  fontItalic: PDFFont;
+  cursor: number = MARGIN; // top-down y
+
+  constructor(
+    doc: PDFDocument,
+    page: PDFPage,
+    font: PDFFont,
+    fontBold: PDFFont,
+    fontItalic: PDFFont,
+  ) {
+    this.doc = doc;
+    this.page = page;
+    this.font = font;
+    this.fontBold = fontBold;
+    this.fontItalic = fontItalic;
+  }
+
+  // Rita text med övre kanten på topY (top-down koordinater).
+  drawText(text: string, x: number, topY: number, opts: DrawOpts = {}) {
+    const font = opts.font ?? this.font;
+    const size = opts.size ?? 10;
+    const color = opts.color ?? BLACK;
+    const s = safe(text);
+    const w = font.widthOfTextAtSize(s, size);
+    let dx = 0;
+    if (opts.width) {
+      if (opts.align === "right") dx = opts.width - w;
+      else if (opts.align === "center") dx = (opts.width - w) / 2;
+    }
+    this.page.drawText(s, {
+      x: x + dx,
+      y: A4_H - topY - size * 0.8,
+      size,
+      font,
+      color,
+    });
+  }
+
+  drawRect(
+    x: number,
+    topY: number,
+    width: number,
+    height: number,
+    fill: ReturnType<typeof rgb> | null,
+    border?: { color: ReturnType<typeof rgb>; width: number },
+  ) {
+    this.page.drawRectangle({
+      x,
+      y: A4_H - topY - height,
+      width,
+      height,
+      color: fill ?? undefined,
+      borderColor: border?.color,
+      borderWidth: border?.width,
+    });
+  }
+
+  drawLine(x1: number, x2: number, topY: number, color: ReturnType<typeof rgb>, thickness = 1) {
+    this.page.drawLine({
+      start: { x: x1, y: A4_H - topY },
+      end: { x: x2, y: A4_H - topY },
+      thickness,
+      color,
+    });
+  }
+
+  drawImage(img: PDFImage, x: number, topY: number, width: number, height: number) {
+    this.page.drawImage(img, {
+      x,
+      y: A4_H - topY - height,
+      width,
+      height,
+    });
+  }
+
+  // Bryt text i ord-baserade rader som ryms i `maxWidth`. Bevarar explicita
+  // radbrytningar i input.
+  wrap(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
+    const lines: string[] = [];
+    for (const para of safe(text).split(/\r?\n/)) {
+      if (!para) {
+        lines.push("");
+        continue;
+      }
+      const words = para.split(/\s+/);
+      let line = "";
+      for (const word of words) {
+        const candidate = line ? line + " " + word : word;
+        if (font.widthOfTextAtSize(candidate, size) > maxWidth && line) {
+          lines.push(line);
+          line = word;
+        } else {
+          line = candidate;
+        }
+      }
+      if (line) lines.push(line);
+    }
+    return lines;
+  }
+
+  // Rita wrappad text och returnera y-positionen efter sista raden.
+  drawWrapped(text: string, x: number, topY: number, opts: DrawOpts & { lineHeight?: number }) {
+    const font = opts.font ?? this.font;
+    const size = opts.size ?? 10;
+    const lineHeight = opts.lineHeight ?? size * 1.35;
+    const lines = this.wrap(text, font, size, opts.width ?? CONTENT_W);
+    let y = topY;
+    for (const line of lines) {
+      this.drawText(line, x, y, opts);
+      y += lineHeight;
+    }
+    return y;
+  }
+
+  newPageIfNeeded(needed: number) {
+    if (this.cursor + needed > A4_H - MARGIN - 24) {
+      this.page = this.doc.addPage([A4_W, A4_H]);
+      this.cursor = MARGIN;
+    }
+  }
+}
+
 export async function generateOfferPdf(offer: OfferData): Promise<Uint8Array> {
-  // Försök läsa logo
-  let logoBuf: Buffer | null = null;
+  const doc = await PDFDocument.create();
+  doc.setTitle(`Offert ${offer.offer_number ?? ""}`.trim());
+  doc.setAuthor("Triad Solutions");
+  doc.setCreator("Triad Admin");
+
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const fontItalic = await doc.embedFont(StandardFonts.HelveticaOblique);
+
+  const page = doc.addPage([A4_W, A4_H]);
+  const p = new Pdf(doc, page, font, fontBold, fontItalic);
+
+  // Försök ladda logo
+  let logo: PDFImage | null = null;
   try {
     const logoPath = path.resolve(process.cwd(), "public", "logos", "Logo_Color_with_text.png");
-    logoBuf = await fs.readFile(logoPath);
+    const buf = await fs.readFile(logoPath);
+    logo = await doc.embedPng(buf);
   } catch {
     /* fallback to text */
   }
 
-  // Räkna ut totaler i förväg
-  const vat = offer.vat_rate ?? 25;
+  // ====== HEADER ======
+  if (logo) {
+    // Logon är 1080x1080 (kvadratisk) — rita 70x70 för att behålla aspect ratio
+    p.drawImage(logo, MARGIN, MARGIN, 70, 70);
+  } else {
+    p.drawText("TRIAD SOLUTIONS", MARGIN, MARGIN + 22, {
+      font: fontBold, size: 22, color: BRAND,
+    });
+  }
+  p.drawText("OFFERT", MARGIN, MARGIN + 8, {
+    font: fontBold, size: 28, color: DARK,
+    width: CONTENT_W, align: "right",
+  });
+  p.drawText("Skraddarsydd mjukvara for SMB", MARGIN, MARGIN + 42, {
+    font: fontItalic, size: 9, color: BRAND,
+    width: CONTENT_W, align: "right",
+  });
+
+  // Teal divider
+  const dividerY = MARGIN + 78;
+  p.drawLine(MARGIN, MARGIN + CONTENT_W, dividerY, BRAND, 2);
+  p.cursor = dividerY + 16;
+
+  // ====== FRÅN / TILL ======
+  const colW = CONTENT_W / 2;
+  p.drawText("FRÅN", MARGIN, p.cursor, { font: fontBold, size: 9, color: BRAND });
+  p.drawText("TILL", MARGIN + colW, p.cursor, { font: fontBold, size: 9, color: BRAND });
+  let fromY = p.cursor + 14;
+  let toY = p.cursor + 14;
+
+  const fromLines: [string, boolean][] = [
+    ["Triad Solutions", true],
+    ["Organisationsnummer: XXXXXX-XXXX", false],
+    ["[Gatuadress]", false],
+    ["[Postnr] [Ort]", false],
+    ["info@triadsolutions.se", false],
+    ["[Telefonnummer]", false],
+  ];
+  const toLines: [string, boolean][] = [
+    [offer.customer?.name ?? "—", true],
+    [offer.customer?.contact_person ? `Att: ${offer.customer.contact_person}` : "—", false],
+    [offer.customer?.email ?? "", false],
+    [offer.customer?.phone ?? "", false],
+    [offer.customer?.website ?? "", false],
+  ];
+
+  for (const [text, bold] of fromLines) {
+    if (text) {
+      p.drawText(text, MARGIN, fromY, {
+        font: bold ? fontBold : font, size: bold ? 11 : 10,
+        color: bold ? BLACK : GREY, width: colW - 8,
+      });
+    }
+    fromY += bold ? 16 : 13;
+  }
+  for (const [text, bold] of toLines) {
+    if (text) {
+      p.drawText(text, MARGIN + colW, toY, {
+        font: bold ? fontBold : font, size: bold ? 11 : 10,
+        color: bold ? BLACK : GREY, width: colW - 8,
+      });
+    }
+    toY += bold ? 16 : 13;
+  }
+  p.cursor = Math.max(fromY, toY) + 6;
+
+  // ====== DETALJBOXAR ======
+  const boxes = [
+    { label: "OFFERTNUMMER", value: offer.offer_number ?? "—" },
+    { label: "OFFERTDATUM", value: fmtDateSv(offer.offer_date) },
+    { label: "GILTIG TILL", value: fmtDateSv(offer.valid_until) },
+    { label: "ER REFERENS", value: offer.reference ?? "—" },
+  ];
+  const boxW = CONTENT_W / 4;
+  const boxH = 46;
+  for (let i = 0; i < boxes.length; i++) {
+    const bx = MARGIN + i * boxW;
+    p.drawRect(bx, p.cursor, boxW - 4, boxH, LIGHT);
+    p.drawText(boxes[i].label, bx + 8, p.cursor + 8, {
+      font: fontBold, size: 7, color: GREY,
+    });
+    p.drawText(boxes[i].value, bx + 8, p.cursor + 22, {
+      font: fontBold, size: 11, color: DARK, width: boxW - 16,
+    });
+  }
+  p.cursor += boxH + 18;
+
+  // ====== PROJEKTBESKRIVNING ======
+  p.cursor = drawSectionHeading(p, "PROJEKTBESKRIVNING", p.cursor);
+  if (offer.project_description) {
+    const endY = p.drawWrapped(offer.project_description, MARGIN, p.cursor, {
+      size: 10, color: BLACK, width: CONTENT_W,
+    });
+    p.cursor = endY + 8;
+  } else {
+    p.drawText("—", MARGIN, p.cursor, { color: GREY });
+    p.cursor += 16;
+  }
+
+  // ====== SPECIFIKATION ======
+  p.newPageIfNeeded(140);
+  p.cursor = drawSectionHeading(p, "SPECIFIKATION", p.cursor);
+
+  // Tabellbredder
+  const cBeskrivning = { x: MARGIN, w: 260 };
+  const cAntal       = { x: MARGIN + 260, w: 60 };
+  const cApris       = { x: MARGIN + 320, w: 100 };
+  const cBelopp      = { x: MARGIN + 420, w: CONTENT_W - 420 };
+
+  const rowH = 22;
+  // Header
+  p.drawRect(MARGIN, p.cursor, CONTENT_W, rowH, DARK);
+  p.drawText("Beskrivning", cBeskrivning.x + 6, p.cursor + 7, {
+    font: fontBold, size: 9, color: WHITE, width: cBeskrivning.w - 12,
+  });
+  p.drawText("Antal", cAntal.x, p.cursor + 7, {
+    font: fontBold, size: 9, color: WHITE, width: cAntal.w, align: "center",
+  });
+  p.drawText(`À-pris (${offer.currency})`, cApris.x, p.cursor + 7, {
+    font: fontBold, size: 9, color: WHITE, width: cApris.w - 6, align: "right",
+  });
+  p.drawText(`Belopp (${offer.currency})`, cBelopp.x, p.cursor + 7, {
+    font: fontBold, size: 9, color: WHITE, width: cBelopp.w - 6, align: "right",
+  });
+  p.cursor += rowH;
+
   const projPrice = offer.project_price ?? 0;
   const monthPrice = offer.monthly_price ?? 0;
   const projDiscPct = clampPct(Number(offer.project_discount_pct ?? 0));
   const monthDiscPct = clampPct(Number(offer.monthly_discount_pct ?? 0));
+  const vat = offer.vat_rate ?? 25;
 
   const projDiscount = projPrice * (projDiscPct / 100);
   const projAfter = projPrice - projDiscount;
   const projVat = projAfter * (vat / 100);
   const projTotal = projAfter + projVat;
-
   const monthDiscount = monthPrice * (monthDiscPct / 100);
   const monthAfter = monthPrice - monthDiscount;
   const monthVat = monthAfter * (vat / 100);
   const monthTotal = monthAfter + monthVat;
 
-  return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({
-      size: "A4",
-      margin: MARGIN,
-      info: {
-        Title: `Offert ${offer.offer_number ?? ""}`.trim(),
-        Author: "Triad Solutions",
-      },
+  const drawSpecRow = (
+    desc: string,
+    qty: number,
+    unit: number,
+    amount: number,
+    bg: ReturnType<typeof rgb> | null,
+  ) => {
+    if (bg) p.drawRect(MARGIN, p.cursor, CONTENT_W, rowH, bg);
+    // borders
+    p.drawLine(MARGIN, MARGIN + CONTENT_W, p.cursor, BORDER, 0.5);
+    p.drawLine(MARGIN, MARGIN + CONTENT_W, p.cursor + rowH, BORDER, 0.5);
+    p.drawText(desc, cBeskrivning.x + 6, p.cursor + 7, {
+      font: fontBold, size: 10, width: cBeskrivning.w - 12,
     });
+    p.drawText(String(qty), cAntal.x, p.cursor + 7, {
+      size: 10, width: cAntal.w, align: "center",
+    });
+    p.drawText(fmtMoney(unit), cApris.x, p.cursor + 7, {
+      size: 10, width: cApris.w - 6, align: "right",
+    });
+    p.drawText(fmtMoney(amount), cBelopp.x, p.cursor + 7, {
+      font: fontBold, size: 10, width: cBelopp.w - 6, align: "right",
+    });
+    p.cursor += rowH;
+  };
 
-    const chunks: Buffer[] = [];
-    doc.on("data", (c) => chunks.push(c));
-    doc.on("end", () => resolve(new Uint8Array(Buffer.concat(chunks))));
-    doc.on("error", reject);
+  drawSpecRow("Projektkostnad (engångsavgift)", 1, projPrice, projPrice, null);
+  drawSpecRow("Underhållsavgift (per månad)", 1, monthPrice, monthPrice, LIGHT);
+  p.cursor += 14;
 
-    // ====== HEADER ======
-    const headerY = MARGIN;
-    if (logoBuf) {
-      // Logon är 1080x1080 (square) — rendera 70x70 så aspect ratio behålls
-      doc.image(logoBuf, MARGIN, headerY, { width: 70, height: 70 });
+  // ====== ENGÅNGSKOSTNAD ======
+  p.newPageIfNeeded(140);
+  p.cursor = drawSubsectionHeading(p, "ENGÅNGSKOSTNAD (faktureras vid projektstart)", p.cursor);
+
+  const totalsLabelX = MARGIN + 220;
+  const totalsLabelW = 240;
+  const totalsValueX = MARGIN + 460;
+  const totalsValueW = CONTENT_W - 460 + MARGIN - 8;
+
+  const drawTotalRow = (
+    label: string,
+    value: string,
+    opts: { highlight?: ReturnType<typeof rgb>; tone?: ReturnType<typeof rgb>; divider?: boolean } = {},
+  ) => {
+    const h = opts.highlight ? 24 : 18;
+    if (opts.highlight) {
+      p.drawRect(totalsLabelX, p.cursor, CONTENT_W - 220 + MARGIN, h, opts.highlight);
+      p.drawText(label, totalsLabelX + 8, p.cursor + 7, {
+        font: fontBold, size: 11, color: WHITE, width: totalsLabelW - 16, align: "right",
+      });
+      p.drawText(value, totalsValueX, p.cursor + 7, {
+        font: fontBold, size: 11, color: WHITE, width: totalsValueW, align: "right",
+      });
     } else {
-      doc
-        .font(FONT_BOLD)
-        .fontSize(22)
-        .fillColor(BRAND)
-        .text("TRIAD SOLUTIONS", MARGIN, headerY + 20);
-    }
-
-    doc
-      .font(FONT_BOLD)
-      .fontSize(28)
-      .fillColor(DARK)
-      .text("OFFERT", MARGIN, headerY + 10, {
-        width: CONTENT_W,
-        align: "right",
+      p.drawText(label, totalsLabelX, p.cursor + 5, {
+        font: fontBold, size: 10, color: opts.tone ?? BLACK,
+        width: totalsLabelW, align: "right",
       });
-    doc
-      .font(FONT_ITALIC)
-      .fontSize(9)
-      .fillColor(BRAND)
-      .text("Skräddarsydd mjukvara för SMB", MARGIN, headerY + 42, {
-        width: CONTENT_W,
-        align: "right",
+      p.drawText(value, totalsValueX, p.cursor + 5, {
+        size: 10, color: opts.tone ?? BLACK,
+        width: totalsValueW, align: "right",
       });
-
-    // Teal divider
-    const dividerY = headerY + 78;
-    doc
-      .moveTo(MARGIN, dividerY)
-      .lineTo(MARGIN + CONTENT_W, dividerY)
-      .strokeColor(BRAND)
-      .lineWidth(2)
-      .stroke();
-
-    // ====== FRÅN / TILL ======
-    let y = dividerY + 18;
-    const colW = CONTENT_W / 2;
-
-    doc.font(FONT_BOLD).fontSize(9).fillColor(BRAND).text("FRÅN", MARGIN, y);
-    doc.font(FONT_BOLD).fontSize(9).fillColor(BRAND).text("TILL", MARGIN + colW, y);
-    y += 14;
-
-    const fromLines = [
-      ["Triad Solutions", true],
-      ["Organisationsnummer: XXXXXX-XXXX", false],
-      ["[Gatuadress]", false],
-      ["[Postnr] [Ort]", false],
-      ["info@triadsolutions.se", false],
-      ["[Telefonnummer]", false],
-    ] as const;
-
-    const toLines = [
-      [offer.customer?.name ?? "—", true],
-      [offer.customer?.contact_person ? `Att: ${offer.customer.contact_person}` : "—", false],
-      [offer.customer?.email ?? "", false],
-      [offer.customer?.phone ?? "", false],
-      [offer.customer?.website ?? "", false],
-      ["", false],
-    ] as const;
-
-    const fromTopY = y;
-    let fromY = y;
-    for (const [text, bold] of fromLines) {
-      doc
-        .font(bold ? FONT_BOLD : FONT)
-        .fontSize(bold ? 11 : 10)
-        .fillColor(bold ? TEXT : GREY)
-        .text(text, MARGIN, fromY, { width: colW - 8 });
-      fromY += bold ? 16 : 12;
-    }
-    let toY = y;
-    for (const [text, bold] of toLines) {
-      doc
-        .font(bold ? FONT_BOLD : FONT)
-        .fontSize(bold ? 11 : 10)
-        .fillColor(bold ? TEXT : GREY)
-        .text(text, MARGIN + colW, toY, { width: colW - 8 });
-      toY += bold ? 16 : 12;
-    }
-    y = Math.max(fromY, toY) + 8;
-
-    // ====== DETALJBOXAR ======
-    const boxes = [
-      { label: "OFFERTNUMMER", value: offer.offer_number ?? "—" },
-      { label: "OFFERTDATUM", value: fmtDateSv(offer.offer_date) },
-      { label: "GILTIG TILL", value: fmtDateSv(offer.valid_until) },
-      { label: "ER REFERENS", value: offer.reference ?? "—" },
-    ];
-    const boxW = CONTENT_W / 4;
-    const boxH = 46;
-    for (let i = 0; i < boxes.length; i++) {
-      const bx = MARGIN + i * boxW;
-      doc.rect(bx, y, boxW - 4, boxH).fillColor(LIGHT).fill();
-      doc
-        .font(FONT_BOLD)
-        .fontSize(7)
-        .fillColor(GREY)
-        .text(boxes[i].label, bx + 8, y + 7, { width: boxW - 20 });
-      doc
-        .font(FONT_BOLD)
-        .fontSize(11)
-        .fillColor(DARK)
-        .text(boxes[i].value, bx + 8, y + 22, { width: boxW - 20 });
-    }
-    y += boxH + 18;
-
-    // ====== PROJEKTBESKRIVNING ======
-    y = drawSectionHeading(doc, "PROJEKTBESKRIVNING", y);
-    doc
-      .font(FONT)
-      .fontSize(10)
-      .fillColor(offer.project_description ? TEXT : GREY)
-      .text(offer.project_description ?? "—", MARGIN, y, { width: CONTENT_W });
-    y = doc.y + 14;
-
-    // ====== SPECIFIKATION ======
-    y = drawSectionHeading(doc, "SPECIFIKATION", y);
-
-    // Tabellhuvud
-    const cols = [
-      { x: MARGIN, w: 260, label: "Beskrivning", align: "left" as const },
-      { x: MARGIN + 260, w: 60, label: "Antal", align: "center" as const },
-      { x: MARGIN + 320, w: 100, label: `À-pris (${offer.currency})`, align: "right" as const },
-      { x: MARGIN + 420, w: CONTENT_W - 420, label: `Belopp (${offer.currency})`, align: "right" as const },
-    ];
-
-    const rowH = 22;
-    // Header
-    doc.rect(MARGIN, y, CONTENT_W, rowH).fillColor(DARK).fill();
-    for (const c of cols) {
-      doc
-        .font(FONT_BOLD)
-        .fontSize(9)
-        .fillColor("white")
-        .text(c.label, c.x + 6, y + 7, { width: c.w - 12, align: c.align });
-    }
-    y += rowH;
-
-    const drawSpecRow = (
-      desc: string,
-      qty: number,
-      unit: number,
-      amount: number,
-      bg: string | null,
-    ) => {
-      if (bg) doc.rect(MARGIN, y, CONTENT_W, rowH).fillColor(bg).fill();
-      // Border lines
-      doc.lineWidth(0.5).strokeColor("#D5D5DA");
-      doc.moveTo(MARGIN, y).lineTo(MARGIN + CONTENT_W, y).stroke();
-      doc.moveTo(MARGIN, y + rowH).lineTo(MARGIN + CONTENT_W, y + rowH).stroke();
-
-      doc.font(FONT_BOLD).fontSize(10).fillColor(TEXT)
-        .text(desc, cols[0].x + 6, y + 7, { width: cols[0].w - 12 });
-      doc.font(FONT).fontSize(10).fillColor(TEXT)
-        .text(String(qty), cols[1].x + 6, y + 7, { width: cols[1].w - 12, align: "center" });
-      doc.font(FONT).fontSize(10).fillColor(TEXT)
-        .text(fmtMoney(unit), cols[2].x + 6, y + 7, { width: cols[2].w - 12, align: "right" });
-      doc.font(FONT_BOLD).fontSize(10).fillColor(TEXT)
-        .text(fmtMoney(amount), cols[3].x + 6, y + 7, { width: cols[3].w - 12, align: "right" });
-      y += rowH;
-    };
-
-    drawSpecRow("Projektkostnad (engångsavgift)", 1, projPrice, projPrice, null);
-    drawSpecRow("Underhållsavgift (per månad)", 1, monthPrice, monthPrice, LIGHT);
-    y += 12;
-
-    // ====== ENGÅNGSKOSTNAD TOTALER ======
-    y = drawSubsectionHeading(doc, "ENGÅNGSKOSTNAD (faktureras vid projektstart)", y);
-
-    const drawTotalRow = (
-      label: string,
-      value: string,
-      opts: { highlight?: string; tone?: string; divider?: boolean } = {},
-    ) => {
-      const rowHt = opts.highlight ? 24 : 18;
-      if (opts.highlight) {
-        // Markerad row med färg över hela bredden av label+value
-        const startX = MARGIN + 220;
-        doc.rect(startX, y, CONTENT_W - 220, rowHt).fillColor(opts.highlight).fill();
-        doc.font(FONT_BOLD).fontSize(11).fillColor("white")
-          .text(label, startX + 8, y + 7, { width: 240, align: "right" });
-        doc.font(FONT_BOLD).fontSize(11).fillColor("white")
-          .text(value, MARGIN + 460, y + 7, { width: CONTENT_W - 460 - 8, align: "right" });
-      } else {
-        doc.font(FONT_BOLD).fontSize(10).fillColor(opts.tone ?? TEXT)
-          .text(label, MARGIN + 220, y + 5, { width: 240, align: "right" });
-        doc.font(FONT).fontSize(10).fillColor(opts.tone ?? TEXT)
-          .text(value, MARGIN + 460, y + 5, { width: CONTENT_W - 460 - 8, align: "right" });
-        if (opts.divider) {
-          doc.lineWidth(0.5).strokeColor("#D5D5DA");
-          doc.moveTo(MARGIN + 220, y + rowHt - 1)
-             .lineTo(MARGIN + CONTENT_W, y + rowHt - 1).stroke();
-        }
+      if (opts.divider) {
+        p.drawLine(totalsLabelX, MARGIN + CONTENT_W, p.cursor + h - 1, BORDER, 0.5);
       }
-      y += rowHt;
-    };
-
-    drawTotalRow("Delsumma", fmtMoney(projPrice), { divider: true });
-    if (projDiscPct > 0) {
-      drawTotalRow(`Rabatt (${projDiscPct} %)`, `−${fmtMoney(projDiscount)}`, {
-        divider: true,
-        tone: ROSE,
-      });
-      drawTotalRow("Efter rabatt", fmtMoney(projAfter), { divider: true });
     }
-    drawTotalRow(`Moms (${vat} %)`, fmtMoney(projVat), { divider: true });
-    drawTotalRow("TOTALT (inkl. moms)", `${fmtMoney(projTotal)} ${offer.currency}`, {
-      highlight: DARK,
+    p.cursor += h;
+  };
+
+  drawTotalRow("Delsumma", fmtMoney(projPrice), { divider: true });
+  if (projDiscPct > 0) {
+    drawTotalRow(`Rabatt (${projDiscPct} %)`, `−${fmtMoney(projDiscount)}`, {
+      divider: true, tone: ROSE,
     });
-    y += 12;
-
-    // ====== MÅNADSKOSTNAD TOTALER ======
-    y = drawSubsectionHeading(doc, "ÅTERKOMMANDE MÅNADSKOSTNAD (faktureras månadsvis)", y);
-
-    drawTotalRow("Per månad exkl. moms", fmtMoney(monthPrice), { divider: true });
-    if (monthDiscPct > 0) {
-      drawTotalRow(`Rabatt (${monthDiscPct} %)`, `−${fmtMoney(monthDiscount)}`, {
-        divider: true,
-        tone: ROSE,
-      });
-      drawTotalRow("Per månad efter rabatt", fmtMoney(monthAfter), { divider: true });
-    }
-    drawTotalRow(`Moms (${vat} %)`, fmtMoney(monthVat), { divider: true });
-    drawTotalRow("PER MÅNAD (inkl. moms)", `${fmtMoney(monthTotal)} ${offer.currency}`, {
-      highlight: BRAND,
-    });
-
-    // Årskostnad info-rad
-    doc.font(FONT_ITALIC).fontSize(9).fillColor(GREY)
-      .text("Årskostnad (inkl. moms)", MARGIN + 220, y + 5, { width: 240, align: "right" });
-    doc.font(FONT_ITALIC).fontSize(9).fillColor(GREY)
-      .text(`${fmtMoney(monthTotal * 12)} ${offer.currency}`, MARGIN + 460, y + 5, {
-        width: CONTENT_W - 460 - 8, align: "right",
-      });
-    y += 22;
-
-    // ====== ÖVRIGA KOSTNADER (conditional) ======
-    if (offer.other_costs && offer.other_costs.trim()) {
-      y = maybeNewPage(doc, y, 100);
-      y = drawSectionHeading(doc, "ÖVRIGA KOSTNADER", y);
-      doc.font(FONT).fontSize(10).fillColor(TEXT)
-        .text(offer.other_costs, MARGIN, y, { width: CONTENT_W });
-      y = doc.y + 4;
-      doc.font(FONT_ITALIC).fontSize(9).fillColor(GREY)
-        .text(
-          "Ovanstående kostnader är rörliga / villkorade och ingår inte i totalsumman ovan.",
-          MARGIN, y, { width: CONTENT_W },
-        );
-      y = doc.y + 14;
-    }
-
-    // ====== VILLKOR ======
-    y = maybeNewPage(doc, y, 180);
-    y = drawSectionHeading(doc, "VILLKOR", y);
-
-    const villkor: [string, string][] = [
-      ["Betalningsvillkor:", "30 dagar netto från fakturadatum."],
-      ["Giltighetstid:", `Offerten är giltig till ${fmtDateSv(offer.valid_until)}.`],
-      ["Leveranstid:", "[Ange uppskattad leveranstid eller projektplan]."],
-      ["Priser:", `Samtliga priser anges exklusive moms i ${offer.currency}.`],
-      ["Ändringar:", "Tilläggsarbeten utöver specifikationen debiteras separat enligt timpris [XXX SEK/h]."],
-      ["Underhåll:", "Avtalstid 12 mån, därefter löpande med 3 mån uppsägningstid om inget annat avtalats."],
-      ["Resor/utlägg:", "Eventuella resor och utlägg debiteras enligt självkostnadsprincipen."],
-      ["Övrigt:", "I övrigt gäller ALOS 05 (Allmänna leveransbestämmelser)."],
-    ];
-    for (const [label, text] of villkor) {
-      doc.font(FONT_BOLD).fontSize(10).fillColor(TEXT)
-        .text(`• ${label}`, MARGIN, y, { width: 110, continued: false });
-      doc.font(FONT).fontSize(10).fillColor(TEXT)
-        .text(text, MARGIN + 115, y, { width: CONTENT_W - 115 });
-      y = doc.y + 4;
-    }
-    y += 10;
-
-    // ====== GODKÄNNANDE ======
-    y = maybeNewPage(doc, y, 160);
-    y = drawSectionHeading(doc, "GODKÄNNANDE", y);
-    doc.font(FONT).fontSize(10).fillColor(GREY)
-      .text(
-        "Vänligen returnera signerad offert till info@triadsolutions.se för att bekräfta beställningen.",
-        MARGIN, y, { width: CONTENT_W },
-      );
-    y = doc.y + 30;
-
-    const sigW = (CONTENT_W - 30) / 2;
-    drawSignatureBlock(doc, MARGIN, y, sigW, "Underskrift — För Triad Solutions");
-    drawSignatureBlock(doc, MARGIN + sigW + 30, y, sigW, "Underskrift — För kunden");
-
-    // Footer (sista sidan)
-    doc.font(FONT_ITALIC).fontSize(10).fillColor(BRAND)
-      .text("Tack för förtroendet!", MARGIN, PAGE_H - MARGIN - 24, {
-        width: CONTENT_W, align: "center",
-      });
-
-    doc.end();
+    drawTotalRow("Efter rabatt", fmtMoney(projAfter), { divider: true });
+  }
+  drawTotalRow(`Moms (${vat} %)`, fmtMoney(projVat), { divider: true });
+  drawTotalRow("TOTALT (inkl. moms)", `${fmtMoney(projTotal)} ${offer.currency}`, {
+    highlight: DARK,
   });
+  p.cursor += 12;
+
+  // ====== MÅNADSKOSTNAD ======
+  p.newPageIfNeeded(160);
+  p.cursor = drawSubsectionHeading(p, "ÅTERKOMMANDE MÅNADSKOSTNAD (faktureras månadsvis)", p.cursor);
+
+  drawTotalRow("Per månad exkl. moms", fmtMoney(monthPrice), { divider: true });
+  if (monthDiscPct > 0) {
+    drawTotalRow(`Rabatt (${monthDiscPct} %)`, `−${fmtMoney(monthDiscount)}`, {
+      divider: true, tone: ROSE,
+    });
+    drawTotalRow("Per månad efter rabatt", fmtMoney(monthAfter), { divider: true });
+  }
+  drawTotalRow(`Moms (${vat} %)`, fmtMoney(monthVat), { divider: true });
+  drawTotalRow("PER MÅNAD (inkl. moms)", `${fmtMoney(monthTotal)} ${offer.currency}`, {
+    highlight: BRAND,
+  });
+
+  // Årskostnad (info-rad)
+  p.drawText("Årskostnad (inkl. moms)", totalsLabelX, p.cursor + 5, {
+    font: fontItalic, size: 9, color: GREY, width: totalsLabelW, align: "right",
+  });
+  p.drawText(`${fmtMoney(monthTotal * 12)} ${offer.currency}`, totalsValueX, p.cursor + 5, {
+    font: fontItalic, size: 9, color: GREY, width: totalsValueW, align: "right",
+  });
+  p.cursor += 22;
+
+  // ====== ÖVRIGA KOSTNADER (conditional) ======
+  if (offer.other_costs && offer.other_costs.trim()) {
+    p.newPageIfNeeded(80);
+    p.cursor = drawSectionHeading(p, "ÖVRIGA KOSTNADER", p.cursor);
+    const endY = p.drawWrapped(offer.other_costs, MARGIN, p.cursor, {
+      size: 10, color: BLACK, width: CONTENT_W,
+    });
+    p.cursor = endY + 4;
+    p.drawText(
+      "Ovanstående kostnader är rörliga / villkorade och ingår inte i totalsumman ovan.",
+      MARGIN, p.cursor,
+      { font: fontItalic, size: 9, color: GREY, width: CONTENT_W },
+    );
+    p.cursor += 22;
+  }
+
+  // ====== VILLKOR ======
+  p.newPageIfNeeded(200);
+  p.cursor = drawSectionHeading(p, "VILLKOR", p.cursor);
+
+  const villkor: [string, string][] = [
+    ["Betalningsvillkor:", "30 dagar netto från fakturadatum."],
+    ["Giltighetstid:", `Offerten är giltig till ${fmtDateSv(offer.valid_until)}.`],
+    ["Leveranstid:", "[Ange uppskattad leveranstid eller projektplan]."],
+    ["Priser:", `Samtliga priser anges exklusive moms i ${offer.currency}.`],
+    ["Ändringar:", "Tilläggsarbeten utöver specifikationen debiteras separat enligt timpris [XXX SEK/h]."],
+    ["Underhåll:", "Avtalstid 12 mån, därefter löpande med 3 mån uppsägningstid om inget annat avtalats."],
+    ["Resor/utlägg:", "Eventuella resor och utlägg debiteras enligt självkostnadsprincipen."],
+    ["Övrigt:", "I övrigt gäller ALOS 05 (Allmänna leveransbestämmelser)."],
+  ];
+  for (const [label, text] of villkor) {
+    p.newPageIfNeeded(24);
+    p.drawText(`• ${label}`, MARGIN, p.cursor, {
+      font: fontBold, size: 10, width: 110,
+    });
+    const endY = p.drawWrapped(text, MARGIN + 115, p.cursor, {
+      size: 10, color: BLACK, width: CONTENT_W - 115,
+    });
+    p.cursor = Math.max(p.cursor + 16, endY + 4);
+  }
+  p.cursor += 8;
+
+  // ====== GODKÄNNANDE ======
+  p.newPageIfNeeded(160);
+  p.cursor = drawSectionHeading(p, "GODKÄNNANDE", p.cursor);
+  p.drawText(
+    "Vänligen returnera signerad offert till info@triadsolutions.se för att bekräfta beställningen.",
+    MARGIN, p.cursor,
+    { size: 10, color: GREY, width: CONTENT_W },
+  );
+  p.cursor += 30;
+
+  const sigW = (CONTENT_W - 30) / 2;
+  drawSignatureBlock(p, MARGIN, p.cursor, sigW, "Underskrift — För Triad Solutions");
+  drawSignatureBlock(p, MARGIN + sigW + 30, p.cursor, sigW, "Underskrift — För kunden");
+
+  // Footer (bottom of current page)
+  p.drawText("Tack för förtroendet!", MARGIN, A4_H - MARGIN - 16, {
+    font: fontItalic, size: 11, color: BRAND, width: CONTENT_W, align: "center",
+  });
+
+  return await doc.save();
 }
 
-function drawSectionHeading(doc: PDFKit.PDFDocument, label: string, y: number): number {
-  doc.font(FONT_BOLD).fontSize(11).fillColor(DARK).text(label, MARGIN, y);
-  const lineY = y + 16;
-  doc.moveTo(MARGIN, lineY).lineTo(MARGIN + CONTENT_W, lineY)
-    .strokeColor(BRAND).lineWidth(1.5).stroke();
+function drawSectionHeading(p: Pdf, label: string, topY: number): number {
+  p.drawText(label, MARGIN, topY, {
+    font: p.fontBold, size: 11, color: DARK,
+  });
+  const lineY = topY + 16;
+  p.drawLine(MARGIN, MARGIN + CONTENT_W, lineY, BRAND, 1.5);
   return lineY + 8;
 }
 
-function drawSubsectionHeading(doc: PDFKit.PDFDocument, label: string, y: number): number {
-  doc.font(FONT_BOLD).fontSize(10).fillColor(DARK).text(label, MARGIN, y);
-  const lineY = y + 14;
-  doc.moveTo(MARGIN, lineY).lineTo(MARGIN + CONTENT_W, lineY)
-    .strokeColor(DARK).lineWidth(0.5).stroke();
+function drawSubsectionHeading(p: Pdf, label: string, topY: number): number {
+  p.drawText(label, MARGIN, topY, {
+    font: p.fontBold, size: 10, color: DARK,
+  });
+  const lineY = topY + 14;
+  p.drawLine(MARGIN, MARGIN + CONTENT_W, lineY, DARK, 0.5);
   return lineY + 6;
 }
 
-function drawSignatureBlock(
-  doc: PDFKit.PDFDocument,
-  x: number,
-  y: number,
-  w: number,
-  label: string,
-) {
-  // Datumlinje
-  doc.moveTo(x, y).lineTo(x + w, y).strokeColor(TEXT).lineWidth(0.5).stroke();
-  doc.font(FONT).fontSize(8).fillColor(GREY).text("Ort och datum", x, y + 3);
-  // Underskriftslinje
-  const sigY = y + 40;
-  doc.moveTo(x, sigY).lineTo(x + w, sigY).strokeColor(TEXT).lineWidth(0.5).stroke();
-  doc.font(FONT).fontSize(8).fillColor(GREY).text(label, x, sigY + 3);
-  doc.font(FONT).fontSize(8).fillColor(GREY).text("[Namnförtydligande]", x, sigY + 14);
-}
-
-function maybeNewPage(doc: PDFKit.PDFDocument, y: number, requiredSpace: number): number {
-  if (y + requiredSpace > PAGE_H - MARGIN - 30) {
-    doc.addPage();
-    return MARGIN;
-  }
-  return y;
+function drawSignatureBlock(p: Pdf, x: number, topY: number, w: number, label: string) {
+  p.drawLine(x, x + w, topY, BLACK, 0.5);
+  p.drawText("Ort och datum", x, topY + 4, {
+    font: p.font, size: 8, color: GREY,
+  });
+  const sigY = topY + 40;
+  p.drawLine(x, x + w, sigY, BLACK, 0.5);
+  p.drawText(label, x, sigY + 4, { font: p.font, size: 8, color: GREY });
+  p.drawText("[Namnförtydligande]", x, sigY + 16, { font: p.font, size: 8, color: GREY });
 }
