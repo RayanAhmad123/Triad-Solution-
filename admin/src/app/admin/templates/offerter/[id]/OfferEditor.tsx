@@ -19,6 +19,9 @@ type Offer = {
   project_description: string | null;
   project_price: number;
   monthly_price: number;
+  project_discount_pct?: number | null;
+  monthly_discount_pct?: number | null;
+  other_costs?: string | null;
   vat_rate: number;
   currency: string;
   notes: string | null;
@@ -54,6 +57,9 @@ export function OfferEditor({
     project_description: offer.project_description ?? "",
     project_price: String(offer.project_price ?? 0),
     monthly_price: String(offer.monthly_price ?? 0),
+    project_discount_pct: String(offer.project_discount_pct ?? 0),
+    monthly_discount_pct: String(offer.monthly_discount_pct ?? 0),
+    other_costs: offer.other_costs ?? "",
     vat_rate: String(offer.vat_rate ?? 25),
     currency: offer.currency ?? "SEK",
     status: offer.status,
@@ -64,21 +70,33 @@ export function OfferEditor({
 
   const projectPrice = Number(f.project_price) || 0;
   const monthlyPrice = Number(f.monthly_price) || 0;
+  const projDiscPct = clampPct(Number(f.project_discount_pct) || 0);
+  const monthDiscPct = clampPct(Number(f.monthly_discount_pct) || 0);
   const vat = Number(f.vat_rate) || 0;
 
   const totals = useMemo(() => {
-    const projVat = projectPrice * (vat / 100);
-    const projTotal = projectPrice + projVat;
-    const monthVat = monthlyPrice * (vat / 100);
-    const monthTotal = monthlyPrice + monthVat;
+    const projDiscount = projectPrice * (projDiscPct / 100);
+    const projAfterDiscount = projectPrice - projDiscount;
+    const projVat = projAfterDiscount * (vat / 100);
+    const projTotal = projAfterDiscount + projVat;
+
+    const monthDiscount = monthlyPrice * (monthDiscPct / 100);
+    const monthAfterDiscount = monthlyPrice - monthDiscount;
+    const monthVat = monthAfterDiscount * (vat / 100);
+    const monthTotal = monthAfterDiscount + monthVat;
+
     return {
+      projDiscount,
+      projAfterDiscount,
       projVat,
       projTotal,
+      monthDiscount,
+      monthAfterDiscount,
       monthVat,
       monthTotal,
       yearTotal: monthTotal * 12,
     };
-  }, [projectPrice, monthlyPrice, vat]);
+  }, [projectPrice, monthlyPrice, projDiscPct, monthDiscPct, vat]);
 
   function bind<K extends keyof typeof f>(k: K) {
     return {
@@ -98,6 +116,9 @@ export function OfferEditor({
       project_description: f.project_description || null,
       project_price: Number(f.project_price) || 0,
       monthly_price: Number(f.monthly_price) || 0,
+      project_discount_pct: clampPct(Number(f.project_discount_pct) || 0),
+      monthly_discount_pct: clampPct(Number(f.monthly_discount_pct) || 0),
+      other_costs: f.other_costs || null,
       vat_rate: Number(f.vat_rate) || 25,
       currency: f.currency,
       status: f.status,
@@ -255,31 +276,69 @@ export function OfferEditor({
             />
           </div>
 
-          <div className="glass rounded-card p-5 space-y-3">
+          <div className="glass rounded-card p-5 space-y-4">
             <h2 className="font-heading text-sm font-semibold uppercase tracking-wider text-[var(--muted)]">
               Priser (exkl. moms)
             </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <label className="block col-span-2 sm:col-span-1">
-                <span className="text-xs text-[var(--muted)]">Engångskostnad</span>
-                <input
-                  type="number"
-                  step="any"
-                  min="0"
-                  {...bind("project_price")}
-                  className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm font-mono"
-                />
-              </label>
-              <label className="block col-span-2 sm:col-span-1">
-                <span className="text-xs text-[var(--muted)]">Per månad</span>
-                <input
-                  type="number"
-                  step="any"
-                  min="0"
-                  {...bind("monthly_price")}
-                  className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm font-mono"
-                />
-              </label>
+
+            {/* Engångskostnad + rabatt */}
+            <div className="rounded-btn border border-white/5 p-3 space-y-3 bg-black/20">
+              <div className="text-xs font-semibold text-white/70">Engångskostnad</div>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="text-xs text-[var(--muted)]">À-pris</span>
+                  <input
+                    type="number"
+                    step="any"
+                    min="0"
+                    {...bind("project_price")}
+                    className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm font-mono"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-xs text-[var(--muted)]">Rabatt %</span>
+                  <input
+                    type="number"
+                    step="any"
+                    min="0"
+                    max="100"
+                    {...bind("project_discount_pct")}
+                    className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm font-mono"
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* Månadsavgift + rabatt */}
+            <div className="rounded-btn border border-teal-400/20 p-3 space-y-3 bg-teal-400/5">
+              <div className="text-xs font-semibold text-teal-200">Underhåll per månad</div>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="text-xs text-[var(--muted)]">À-pris/mån</span>
+                  <input
+                    type="number"
+                    step="any"
+                    min="0"
+                    {...bind("monthly_price")}
+                    className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm font-mono"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-xs text-[var(--muted)]">Rabatt %</span>
+                  <input
+                    type="number"
+                    step="any"
+                    min="0"
+                    max="100"
+                    {...bind("monthly_discount_pct")}
+                    className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm font-mono"
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* Moms + valuta */}
+            <div className="grid grid-cols-2 gap-3">
               <label className="block">
                 <span className="text-xs text-[var(--muted)]">Moms %</span>
                 <input
@@ -303,6 +362,21 @@ export function OfferEditor({
                 </select>
               </label>
             </div>
+          </div>
+
+          <div className="glass rounded-card p-5 space-y-3">
+            <h2 className="font-heading text-sm font-semibold uppercase tracking-wider text-[var(--muted)]">
+              Övriga kostnader
+            </h2>
+            <p className="text-xs text-[var(--muted)] -mt-2">
+              Rörliga eller villkorade kostnader som inte ingår i totalsumman — t.ex. royalty, arvode per beställning, setup-avgift. Syns som en egen sektion i offerten.
+            </p>
+            <textarea
+              {...bind("other_costs")}
+              rows={4}
+              placeholder={`Ex:\nRoyalty: 5 % av kundens omsättning via plattformen\nArvode per beställning: 50 SEK/order\nSupport utöver avtal: 950 SEK/h`}
+              className="w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm resize-y font-mono"
+            />
           </div>
 
           <div className="glass rounded-card p-5 space-y-3">
@@ -362,8 +436,23 @@ export function OfferEditor({
               Engångskostnad
             </h2>
             <div className="space-y-1.5 text-sm">
-              <RowLine label="Exkl. moms" value={fmt(projectPrice)} unit={f.currency} />
-              <RowLine label={`Moms (${vat}%)`} value={fmt(totals.projVat)} unit={f.currency} />
+              <RowLine label="Delsumma" value={fmt(projectPrice)} unit={f.currency} />
+              {projDiscPct > 0 && (
+                <>
+                  <RowLine
+                    label={`Rabatt (${projDiscPct} %)`}
+                    value={`−${fmt(totals.projDiscount)}`}
+                    unit={f.currency}
+                    tone="rose"
+                  />
+                  <RowLine
+                    label="Efter rabatt"
+                    value={fmt(totals.projAfterDiscount)}
+                    unit={f.currency}
+                  />
+                </>
+              )}
+              <RowLine label={`Moms (${vat} %)`} value={fmt(totals.projVat)} unit={f.currency} />
               <div className="border-t border-white/10 pt-1.5 mt-1.5">
                 <RowLine
                   label="Totalt inkl. moms"
@@ -380,8 +469,23 @@ export function OfferEditor({
               Återkommande månadskostnad
             </h2>
             <div className="space-y-1.5 text-sm">
-              <RowLine label="Exkl. moms" value={fmt(monthlyPrice)} unit={f.currency} />
-              <RowLine label={`Moms (${vat}%)`} value={fmt(totals.monthVat)} unit={f.currency} />
+              <RowLine label="Per månad" value={fmt(monthlyPrice)} unit={f.currency} />
+              {monthDiscPct > 0 && (
+                <>
+                  <RowLine
+                    label={`Rabatt (${monthDiscPct} %)`}
+                    value={`−${fmt(totals.monthDiscount)}`}
+                    unit={f.currency}
+                    tone="rose"
+                  />
+                  <RowLine
+                    label="Efter rabatt"
+                    value={fmt(totals.monthAfterDiscount)}
+                    unit={f.currency}
+                  />
+                </>
+              )}
+              <RowLine label={`Moms (${vat} %)`} value={fmt(totals.monthVat)} unit={f.currency} />
               <div className="border-t border-white/10 pt-1.5 mt-1.5">
                 <RowLine
                   label="Per månad inkl. moms"
@@ -445,25 +549,33 @@ function RowLine({
   unit: string;
   highlight?: boolean;
   small?: boolean;
-  tone?: "teal";
+  tone?: "teal" | "rose";
 }) {
+  const labelTone =
+    tone === "rose"
+      ? "text-rose-300"
+      : tone === "teal" && highlight
+      ? "text-teal-200"
+      : "";
+  const valueTone =
+    tone === "rose"
+      ? "text-rose-300"
+      : tone === "teal" && highlight
+      ? "text-teal-100"
+      : "";
   return (
     <div className="flex items-center justify-between gap-2">
       <span
         className={`${small ? "text-xs" : "text-sm"} ${
           highlight ? "font-semibold" : "text-[var(--muted)]"
-        } ${tone === "teal" && highlight ? "text-teal-200" : ""}`}
+        } ${labelTone}`}
       >
         {label}
       </span>
       <span
         className={`font-mono ${
-          highlight
-            ? small
-              ? "text-sm"
-              : "text-base font-semibold"
-            : "text-sm"
-        } ${tone === "teal" && highlight ? "text-teal-100" : ""}`}
+          highlight ? (small ? "text-sm" : "text-base font-semibold") : "text-sm"
+        } ${valueTone}`}
       >
         {value} {unit}
       </span>
@@ -476,4 +588,9 @@ function fmt(n: number) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(n);
+}
+
+function clampPct(n: number) {
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(100, n));
 }

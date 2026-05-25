@@ -27,6 +27,9 @@ export function NewOfferButton({ customers }: { customers: Customer[] }) {
     project_description: "",
     project_price: "0",
     monthly_price: "0",
+    project_discount_pct: "0",
+    monthly_discount_pct: "0",
+    other_costs: "",
     vat_rate: "25",
     currency: "SEK",
     status: "draft",
@@ -49,6 +52,9 @@ export function NewOfferButton({ customers }: { customers: Customer[] }) {
       project_description: f.project_description || null,
       project_price: Number(f.project_price) || 0,
       monthly_price: Number(f.monthly_price) || 0,
+      project_discount_pct: clampPct(Number(f.project_discount_pct) || 0),
+      monthly_discount_pct: clampPct(Number(f.monthly_discount_pct) || 0),
+      other_costs: f.other_costs || null,
       vat_rate: Number(f.vat_rate) || 25,
       currency: f.currency,
       status: f.status,
@@ -79,9 +85,13 @@ export function NewOfferButton({ customers }: { customers: Customer[] }) {
 
   const projectPrice = Number(f.project_price) || 0;
   const monthlyPrice = Number(f.monthly_price) || 0;
+  const projDisc = clampPct(Number(f.project_discount_pct) || 0);
+  const monthDisc = clampPct(Number(f.monthly_discount_pct) || 0);
   const vat = Number(f.vat_rate) || 0;
-  const projTotal = projectPrice * (1 + vat / 100);
-  const monthlyTotal = monthlyPrice * (1 + vat / 100);
+  const projAfterDisc = projectPrice * (1 - projDisc / 100);
+  const monthAfterDisc = monthlyPrice * (1 - monthDisc / 100);
+  const projTotal = projAfterDisc * (1 + vat / 100);
+  const monthlyTotal = monthAfterDisc * (1 + vat / 100);
 
   return (
     <>
@@ -182,27 +192,65 @@ export function NewOfferButton({ customers }: { customers: Customer[] }) {
               <div className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">
                 Priser (exkl. moms)
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <label className="block col-span-2 sm:col-span-1">
-                  <span className="text-xs text-[var(--muted)]">Engångskostnad</span>
-                  <input
-                    type="number"
-                    step="any"
-                    min="0"
-                    {...bind("project_price")}
-                    className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm font-mono"
-                  />
-                </label>
-                <label className="block col-span-2 sm:col-span-1">
-                  <span className="text-xs text-[var(--muted)]">Per månad</span>
-                  <input
-                    type="number"
-                    step="any"
-                    min="0"
-                    {...bind("monthly_price")}
-                    className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm font-mono"
-                  />
-                </label>
+
+              {/* Engångskostnad + rabatt */}
+              <div className="rounded-btn border border-white/5 p-3 space-y-2 bg-black/20">
+                <div className="text-xs font-semibold text-white/70">Engångskostnad</div>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="block">
+                    <span className="text-xs text-[var(--muted)]">À-pris</span>
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      {...bind("project_price")}
+                      className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm font-mono"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs text-[var(--muted)]">Rabatt %</span>
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      max="100"
+                      {...bind("project_discount_pct")}
+                      className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm font-mono"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Månad + rabatt */}
+              <div className="rounded-btn border border-teal-400/20 p-3 space-y-2 bg-teal-400/5">
+                <div className="text-xs font-semibold text-teal-200">Underhåll per månad</div>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="block">
+                    <span className="text-xs text-[var(--muted)]">À-pris/mån</span>
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      {...bind("monthly_price")}
+                      className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm font-mono"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs text-[var(--muted)]">Rabatt %</span>
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      max="100"
+                      {...bind("monthly_discount_pct")}
+                      className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm font-mono"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Moms + valuta */}
+              <div className="grid grid-cols-2 gap-3">
                 <label className="block">
                   <span className="text-xs text-[var(--muted)]">Moms %</span>
                   <input
@@ -234,15 +282,41 @@ export function NewOfferButton({ customers }: { customers: Customer[] }) {
                   <div className="font-mono font-semibold text-base">
                     {fmt(projTotal)} {f.currency}
                   </div>
+                  {projDisc > 0 && (
+                    <div className="text-[10px] text-rose-300 mt-0.5">
+                      −{projDisc}% rabatt applicerad
+                    </div>
+                  )}
                 </div>
                 <div className="rounded-btn bg-teal-400/10 border border-teal-400/20 p-3">
                   <div className="text-teal-200 mb-1">Per månad (inkl. moms)</div>
                   <div className="font-mono font-semibold text-base text-teal-100">
                     {fmt(monthlyTotal)} {f.currency}
                   </div>
+                  {monthDisc > 0 && (
+                    <div className="text-[10px] text-rose-300 mt-0.5">
+                      −{monthDisc}% rabatt applicerad
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
+
+            {/* Övriga kostnader */}
+            <label className="block">
+              <span className="text-xs text-[var(--muted)]">
+                Övriga kostnader{" "}
+                <span className="text-[10px] normal-case font-normal">
+                  (rörliga, ingår ej i totalsumman)
+                </span>
+              </span>
+              <textarea
+                {...bind("other_costs")}
+                rows={3}
+                placeholder={`Ex:\nRoyalty: 5 % av kundens omsättning\nArvode per beställning: 50 SEK/order`}
+                className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm font-mono resize-y"
+              />
+            </label>
 
             <div className="flex justify-end gap-2 pt-2">
               <button
@@ -272,4 +346,9 @@ function fmt(n: number) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(n);
+}
+
+function clampPct(n: number) {
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(100, n));
 }
