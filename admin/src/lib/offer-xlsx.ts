@@ -33,6 +33,9 @@ export type OfferData = {
   project_description: string | null;
   project_price: number;
   monthly_price: number;
+  project_discount_pct?: number | null;
+  monthly_discount_pct?: number | null;
+  other_costs?: string | null;
   vat_rate: number;
   currency: string;
   customer?: {
@@ -357,6 +360,10 @@ export async function generateOfferXlsx(offer: OfferData): Promise<Uint8Array> {
     setRowHeight(row, opts.highlight ? 26 : 20);
   }
 
+  const projDiscPct = Math.max(0, Math.min(100, Number(offer.project_discount_pct ?? 0)));
+  const monthDiscPct = Math.max(0, Math.min(100, Number(offer.monthly_discount_pct ?? 0)));
+  const vatPct = (offer.vat_rate ?? 25) / 100;
+
   // ENGÅNGSKOSTNAD
   const ETO = R2 + 2;
   setMerge(`B${ETO}:F${ETO}`, "ENGÅNGSKOSTNAD (faktureras vid projektstart)", {
@@ -366,18 +373,33 @@ export async function generateOfferXlsx(offer: OfferData): Promise<Uint8Array> {
   sectionUnderline(ETO, "FF0A2540", "thin");
   setRowHeight(ETO, 22);
 
-  const vatPct = (offer.vat_rate ?? 25) / 100;
-  const ED = ETO + 1;
-  const EM = ETO + 2;
-  const ET = ETO + 3;
+  // Dynamiska rader: rabatt-rader hoppar in om procent > 0
+  let cursor = ETO + 1;
+  const ED = cursor++;
   totalsRow(ED, "Delsumma", `E${R1}`, { divider: true });
-  totalsRow(EM, `Moms (${offer.vat_rate ?? 25} %)`, `E${ED}*${vatPct}`, { divider: true });
-  totalsRow(ET, "TOTALT (inkl. moms)", `E${ED}+E${EM}`, { highlight: DARK });
 
-  setRowHeight(ET + 1, 14);
+  // Subtotal-cellen som moms och total räknar på (efter ev. rabatt)
+  let projectAfterDiscountRef = `E${ED}`;
+  if (projDiscPct > 0) {
+    const ERab = cursor++;
+    totalsRow(ERab, `Rabatt (${projDiscPct} %)`, `-E${ED}*${projDiscPct / 100}`, { divider: true });
+    // Färga rabatt-värdet rosa-rött för synlighet
+    ws.getCell(`E${ERab}`).font = { name: FONT, size: 10, color: { argb: "FFB91C1C" } };
+
+    const EAfter = cursor++;
+    totalsRow(EAfter, "Efter rabatt", `E${ED}+E${ERab}`, { divider: true });
+    projectAfterDiscountRef = `E${EAfter}`;
+  }
+  const EM = cursor++;
+  totalsRow(EM, `Moms (${offer.vat_rate ?? 25} %)`, `${projectAfterDiscountRef}*${vatPct}`, { divider: true });
+  const ET = cursor++;
+  totalsRow(ET, "TOTALT (inkl. moms)", `${projectAfterDiscountRef}+E${EM}`, { highlight: DARK });
+
+  setRowHeight(cursor, 14);
+  cursor++;
 
   // MÅNADSKOSTNAD
-  const MTO = ET + 2;
+  const MTO = cursor++;
   setMerge(`B${MTO}:F${MTO}`, "ÅTERKOMMANDE MÅNADSKOSTNAD (faktureras månadsvis)", {
     font: { name: FONT, size: 10, bold: true, color: { argb: DARK } },
     alignment: { vertical: "middle", horizontal: "left" },
@@ -385,14 +407,25 @@ export async function generateOfferXlsx(offer: OfferData): Promise<Uint8Array> {
   sectionUnderline(MTO, "FF0A2540", "thin");
   setRowHeight(MTO, 22);
 
-  const MD = MTO + 1;
-  const MM = MTO + 2;
-  const MT = MTO + 3;
-  const MY = MTO + 4;
+  const MD = cursor++;
   totalsRow(MD, "Per månad exkl. moms", `E${R2}`, { divider: true });
-  totalsRow(MM, `Moms (${offer.vat_rate ?? 25} %)`, `E${MD}*${vatPct}`, { divider: true });
-  totalsRow(MT, "PER MÅNAD (inkl. moms)", `E${MD}+E${MM}`, { highlight: BRAND });
 
+  let monthlyAfterDiscountRef = `E${MD}`;
+  if (monthDiscPct > 0) {
+    const MRab = cursor++;
+    totalsRow(MRab, `Rabatt (${monthDiscPct} %)`, `-E${MD}*${monthDiscPct / 100}`, { divider: true });
+    ws.getCell(`E${MRab}`).font = { name: FONT, size: 10, color: { argb: "FFB91C1C" } };
+
+    const MAfter = cursor++;
+    totalsRow(MAfter, "Per månad efter rabatt", `E${MD}+E${MRab}`, { divider: true });
+    monthlyAfterDiscountRef = `E${MAfter}`;
+  }
+  const MM = cursor++;
+  totalsRow(MM, `Moms (${offer.vat_rate ?? 25} %)`, `${monthlyAfterDiscountRef}*${vatPct}`, { divider: true });
+  const MT = cursor++;
+  totalsRow(MT, "PER MÅNAD (inkl. moms)", `${monthlyAfterDiscountRef}+E${MM}`, { highlight: BRAND });
+
+  const MY = cursor++;
   setMerge(`C${MY}:D${MY}`, "Årskostnad (inkl. moms)", {
     font: { ...fGrey, italic: true },
     alignment: { vertical: "middle", horizontal: "right", indent: 1 },
@@ -404,12 +437,45 @@ export async function generateOfferXlsx(offer: OfferData): Promise<Uint8Array> {
   ws.getCell(`E${MY}`).numFmt = numFmt;
   setRowHeight(MY, 18);
 
-  setRowHeight(MY + 1, 14);
+  setRowHeight(cursor, 14);
+  cursor++;
+
+  // ========================================
+  // ÖVRIGA KOSTNADER (visas endast om fältet är ifyllt)
+  // ========================================
+  if (offer.other_costs && offer.other_costs.trim()) {
+    const OC = cursor++;
+    set(`B${OC}`, "ÖVRIGA KOSTNADER", { font: fHeading });
+    sectionUnderline(OC);
+    setRowHeight(OC, 22);
+
+    const lines = offer.other_costs.split(/\r?\n/).filter((l) => l.length > 0);
+    const linesNeeded = Math.max(lines.length, 2);
+    const ocFirst = cursor;
+    const ocLast = cursor + linesNeeded - 1;
+    setMerge(`B${ocFirst}:F${ocLast}`, offer.other_costs, {
+      font: fNormal,
+      alignment: { vertical: "top", horizontal: "left", wrapText: true },
+    });
+    for (let r = ocFirst; r <= ocLast; r++) setRowHeight(r, 18);
+    cursor = ocLast + 1;
+
+    // En liten kursiv förklaring under
+    const note = cursor++;
+    setMerge(`B${note}:F${note}`,
+      "Ovanstående kostnader är rörliga / villkorade och ingår inte i totalsumman ovan.",
+      { font: { ...fGrey, italic: true }, alignment: { vertical: "middle", horizontal: "left" } },
+    );
+    setRowHeight(note, 18);
+
+    setRowHeight(cursor, 14);
+    cursor++;
+  }
 
   // ========================================
   // VILLKOR
   // ========================================
-  const V = MY + 2;
+  const V = cursor;
   set(`B${V}`, "VILLKOR", { font: fHeading });
   sectionUnderline(V);
   setRowHeight(V, 22);
