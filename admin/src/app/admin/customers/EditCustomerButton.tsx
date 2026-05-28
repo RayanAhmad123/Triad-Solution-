@@ -2,25 +2,48 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Plus } from "lucide-react";
+import { Pencil } from "lucide-react";
 
-export function NewCustomerButton() {
+type Customer = {
+  id: string;
+  name: string;
+  org_number?: string | null;
+  address?: string | null;
+  contact_person?: string | null;
+  industry?: string | null;
+  status?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  website?: string | null;
+  notes?: string | null;
+};
+
+export function EditCustomerButton({ customer }: { customer: Customer }) {
   const supabase = createClient();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const empty = { name: "", org_number: "", address: "", contact_person: "", industry: "", status: "prospect", email: "", phone: "", website: "", notes: "" };
-  const [f, setF] = useState(empty);
   const [saving, setSaving] = useState(false);
+  const [f, setF] = useState({
+    name: customer.name ?? "",
+    org_number: customer.org_number ?? "",
+    address: customer.address ?? "",
+    contact_person: customer.contact_person ?? "",
+    industry: customer.industry ?? "",
+    status: customer.status ?? "prospect",
+    email: customer.email ?? "",
+    phone: customer.phone ?? "",
+    website: customer.website ?? "",
+    notes: customer.notes ?? "",
+  });
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!f.name.trim()) return;
     setSaving(true);
-    const { error } = await supabase.from("customers").insert(f);
+    const { error } = await supabase.from("customers").update(f).eq("id", customer.id);
     setSaving(false);
     if (error) { alert(error.message); return; }
     setOpen(false);
-    setF(empty);
     router.refresh();
   }
 
@@ -30,14 +53,16 @@ export function NewCustomerButton() {
 
   return (
     <>
-      <button onClick={() => setOpen(true)} className="rounded-btn bg-teal-500 hover:bg-teal-400 text-white px-4 py-2.5 text-sm font-semibold flex items-center gap-2 transition-colors shadow-sm shadow-teal-500/20">
-        <Plus size={16} />
-        Ny kund
+      <button
+        onClick={() => setOpen(true)}
+        className="rounded-btn border border-white/10 hover:bg-white/10 px-2.5 py-1.5 text-xs flex items-center gap-1.5 transition-colors"
+      >
+        <Pencil size={12} /> Redigera
       </button>
       {open && (
         <div className="fixed inset-0 bg-black/60 grid place-items-center z-50 p-4" onClick={() => setOpen(false)}>
           <form onClick={(e) => e.stopPropagation()} onSubmit={submit} className="w-full max-w-lg glass rounded-modal p-6 space-y-3 max-h-[90vh] overflow-auto">
-            <h3 className="font-heading text-lg font-semibold">Ny kund</h3>
+            <h3 className="font-heading text-lg font-semibold">Redigera kund</h3>
             <input autoFocus {...bind("name")} placeholder="Kundnamn (juridiskt företagsnamn)" className="w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2" />
             <p className="text-[10px] text-[var(--muted)] -mt-1">
               Organisationsnummer och adress krävs för att kunna generera SaaS- och PUB-avtal.

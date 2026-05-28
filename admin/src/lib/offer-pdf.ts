@@ -7,21 +7,23 @@
 import { PDFDocument, PDFFont, PDFImage, PDFPage, StandardFonts, rgb } from "pdf-lib";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { COMPANY, companyFromLines } from "./company";
 
-const A4_W = 595.28;
-const A4_H = 841.89;
-const MARGIN = 32;
-const CONTENT_W = A4_W - MARGIN * 2;
+export const A4_W = 595.28;
+export const A4_H = 841.89;
+export const MARGIN = 32;
+export const CONTENT_W = A4_W - MARGIN * 2;
 
 // Färger (pdf-lib: rgb 0–1)
-const BRAND  = rgb(0/255,   180/255, 168/255); // #00B4A8
-const DARK   = rgb(10/255,  37/255,  64/255);  // #0A2540
-const LIGHT  = rgb(245/255, 245/255, 247/255); // #F5F5F7
-const GREY   = rgb(99/255,  99/255,  102/255); // #636366
-const ROSE   = rgb(185/255, 28/255,  28/255);  // #B91C1C
-const WHITE  = rgb(1, 1, 1);
-const BLACK  = rgb(0, 0, 0);
-const BORDER = rgb(213/255, 213/255, 218/255); // #D5D5DA
+export const BRAND  = rgb(0/255,   180/255, 168/255); // #00B4A8
+export const DARK   = rgb(10/255,  37/255,  64/255);  // #0A2540
+export const LIGHT  = rgb(245/255, 245/255, 247/255); // #F5F5F7
+export const GREY   = rgb(99/255,  99/255,  102/255); // #636366
+export const ROSE   = rgb(185/255, 28/255,  28/255);  // #B91C1C
+export const WHITE  = rgb(1, 1, 1);
+export const BLACK  = rgb(0, 0, 0);
+export const BORDER = rgb(213/255, 213/255, 218/255); // #D5D5DA
+export const AMBER  = rgb(180/255, 83/255,  9/255);   // #B45309 (varningar)
 
 export type OfferData = {
   offer_number: string | null;
@@ -43,20 +45,22 @@ export type OfferData = {
     email?: string | null;
     phone?: string | null;
     website?: string | null;
+    org_number?: string | null;
+    address?: string | null;
   } | null;
 };
 
-function fmtDateSv(d: string | null | undefined): string {
+export function fmtDateSv(d: string | null | undefined): string {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("sv-SE");
 }
-function fmtMoney(n: number): string {
+export function fmtMoney(n: number): string {
   return new Intl.NumberFormat("sv-SE", {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(Math.round(n));
 }
-function clampPct(n: number): number {
+export function clampPct(n: number): number {
   if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.min(100, n));
 }
@@ -64,13 +68,13 @@ function clampPct(n: number): number {
 // pdf-lib's WinAnsi-kodning täcker latin1 inklusive åäö men inte t.ex. emoji.
 // Strippa karaktärer som inte kan kodas så vi inte kastar fel mitt i render.
 const SUPPORTED = /[\x00-\x7E\xA0-\xFFŒœŠšŽžŸ–—‘’“”†‡•…‰‹›€™]/;
-function safe(text: string): string {
+export function safe(text: string): string {
   let out = "";
   for (const ch of text) out += SUPPORTED.test(ch) ? ch : "?";
   return out;
 }
 
-type DrawOpts = {
+export type DrawOpts = {
   font?: PDFFont;
   size?: number;
   color?: ReturnType<typeof rgb>;
@@ -78,7 +82,7 @@ type DrawOpts = {
   align?: "left" | "center" | "right";
 };
 
-class Pdf {
+export class Pdf {
   doc: PDFDocument;
   page: PDFPage;
   font: PDFFont;
@@ -199,9 +203,29 @@ class Pdf {
 
   newPageIfNeeded(needed: number) {
     if (this.cursor + needed > A4_H - MARGIN - 24) {
-      this.page = this.doc.addPage([A4_W, A4_H]);
-      this.cursor = MARGIN;
+      this.newPage();
     }
+  }
+
+  newPage() {
+    this.page = this.doc.addPage([A4_W, A4_H]);
+    this.cursor = MARGIN;
+  }
+
+  get bottomLimit(): number {
+    return A4_H - MARGIN - 24;
+  }
+}
+
+// Ladda Triad-logon (valfri — faller tillbaka till text om filen saknas, t.ex.
+// i serverless-miljö där public-mappen inte bundlas).
+export async function loadLogo(doc: PDFDocument): Promise<PDFImage | null> {
+  try {
+    const logoPath = path.resolve(process.cwd(), "public", "logos", "Logo_Color_with_text.png");
+    const buf = await fs.readFile(logoPath);
+    return await doc.embedPng(buf);
+  } catch {
+    return null;
   }
 }
 
@@ -218,15 +242,16 @@ export async function generateOfferPdf(offer: OfferData): Promise<Uint8Array> {
   const page = doc.addPage([A4_W, A4_H]);
   const p = new Pdf(doc, page, font, fontBold, fontItalic);
 
-  // Försök ladda logo
-  let logo: PDFImage | null = null;
-  try {
-    const logoPath = path.resolve(process.cwd(), "public", "logos", "Logo_Color_with_text.png");
-    const buf = await fs.readFile(logoPath);
-    logo = await doc.embedPng(buf);
-  } catch {
-    /* fallback to text */
-  }
+  const logo = await loadLogo(doc);
+  drawOfferContent(p, offer, logo);
+
+  return await doc.save();
+}
+
+// Ritar hela offertinnehållet på den aktiva sidan i `p`. Bryter sidor vid behov.
+// Bryts ut så att samma innehåll kan följas av SaaS-avtalet i samma PDF.
+export function drawOfferContent(p: Pdf, offer: OfferData, logo: PDFImage | null) {
+  const { font, fontBold, fontItalic } = p;
 
   // ====== HEADER ======
   if (logo) {
@@ -259,19 +284,16 @@ export async function generateOfferPdf(offer: OfferData): Promise<Uint8Array> {
   let toY = p.cursor + 14;
 
   const fromLines: [string, boolean][] = [
-    ["Triad Solutions", true],
-    ["Organisationsnummer: XXXXXX-XXXX", false],
-    ["[Gatuadress]", false],
-    ["[Postnr] [Ort]", false],
-    ["info@triadsolutions.se", false],
-    ["[Telefonnummer]", false],
+    [COMPANY.name, true],
+    ...companyFromLines().map((l) => [l, false] as [string, boolean]),
   ];
   const toLines: [string, boolean][] = [
     [offer.customer?.name ?? "—", true],
-    [offer.customer?.contact_person ? `Att: ${offer.customer.contact_person}` : "—", false],
+    [offer.customer?.contact_person ? `Att: ${offer.customer.contact_person}` : "", false],
+    [offer.customer?.org_number ? `Org.nr: ${offer.customer.org_number}` : "", false],
+    [offer.customer?.address ? offer.customer.address.replace(/\s*\n\s*/g, ", ") : "", false],
     [offer.customer?.email ?? "", false],
     [offer.customer?.phone ?? "", false],
-    [offer.customer?.website ?? "", false],
   ];
 
   for (const [text, bold] of fromLines) {
@@ -440,7 +462,7 @@ export async function generateOfferPdf(offer: OfferData): Promise<Uint8Array> {
 
   drawTotalRow("Delsumma", fmtMoney(projPrice), { divider: true });
   if (projDiscPct > 0) {
-    drawTotalRow(`Rabatt (${projDiscPct} %)`, `−${fmtMoney(projDiscount)}`, {
+    drawTotalRow(`Rabatt (${projDiscPct} %)`, `-${fmtMoney(projDiscount)}`, {
       divider: true, tone: ROSE,
     });
     drawTotalRow("Efter rabatt", fmtMoney(projAfter), { divider: true });
@@ -457,7 +479,7 @@ export async function generateOfferPdf(offer: OfferData): Promise<Uint8Array> {
 
   drawTotalRow("Per månad exkl. moms", fmtMoney(monthPrice), { divider: true });
   if (monthDiscPct > 0) {
-    drawTotalRow(`Rabatt (${monthDiscPct} %)`, `−${fmtMoney(monthDiscount)}`, {
+    drawTotalRow(`Rabatt (${monthDiscPct} %)`, `-${fmtMoney(monthDiscount)}`, {
       divider: true, tone: ROSE,
     });
     drawTotalRow("Per månad efter rabatt", fmtMoney(monthAfter), { divider: true });
@@ -536,11 +558,9 @@ export async function generateOfferPdf(offer: OfferData): Promise<Uint8Array> {
   p.drawText("Tack för förtroendet!", MARGIN, A4_H - MARGIN - 16, {
     font: fontItalic, size: 11, color: BRAND, width: CONTENT_W, align: "center",
   });
-
-  return await doc.save();
 }
 
-function drawSectionHeading(p: Pdf, label: string, topY: number): number {
+export function drawSectionHeading(p: Pdf, label: string, topY: number): number {
   p.drawText(label, MARGIN, topY, {
     font: p.fontBold, size: 11, color: DARK,
   });

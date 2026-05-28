@@ -3,7 +3,8 @@ import { PageHeader } from "@/components/PageHeader";
 import { Chip } from "@/components/Chip";
 import { SortSelect } from "@/components/SortSelect";
 import { NewCustomerButton } from "./NewCustomerButton";
-import { ChevronRight, Search } from "lucide-react";
+import { EditCustomerButton } from "./EditCustomerButton";
+import { AlertTriangle, Search } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,7 @@ export default async function CustomersPage({
   const supabase = await createClient();
   let q = supabase
     .from("customers")
-    .select("id,name,contact_person,industry,status,email,phone,website,notes,created_at");
+    .select("id,name,org_number,address,contact_person,industry,status,email,phone,website,notes,created_at");
   if (sort === "status") q = q.order("status").order("name");
   else if (sort === "industry") q = q.order("industry", { nullsFirst: false }).order("name");
   else if (sort === "created_desc") q = q.order("created_at", { ascending: false });
@@ -81,11 +82,16 @@ export default async function CustomersPage({
             <div className="min-w-0 flex-1">
               <div className="font-semibold text-sm truncate">{c.name}</div>
               <div className="text-xs text-[var(--muted)] truncate">{c.contact_person ?? c.email ?? c.industry ?? "—"}</div>
-              <div className="mt-1">
+              <div className="mt-1 flex flex-wrap items-center gap-1.5">
                 <Chip tone={statusTone(c.status)}>{statusLabel(c.status)}</Chip>
+                {(!c.org_number || !c.address) && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-amber-400/30 bg-amber-400/10 text-amber-200 px-2 py-0.5 text-[10px]">
+                    <AlertTriangle size={10} /> Saknar avtalsuppgifter
+                  </span>
+                )}
               </div>
             </div>
-            <ChevronRight size={16} className="text-[var(--muted)] shrink-0" />
+            <EditCustomerButton customer={c} />
           </div>
         ))}
         {customers.length === 0 && (
@@ -102,10 +108,11 @@ export default async function CustomersPage({
             <thead className="bg-white/[0.03] text-left text-[var(--muted)] text-xs uppercase tracking-wider">
               <tr>
                 <th className="p-3">Kund</th>
+                <th className="p-3">Org.nr / Adress</th>
                 <th className="p-3">Kontaktperson</th>
-                <th className="p-3">Bransch</th>
                 <th className="p-3">Status</th>
                 <th className="p-3">Kontakt</th>
+                <th className="p-3 text-right">Åtgärd</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -119,8 +126,24 @@ export default async function CustomersPage({
                       </a>
                     )}
                   </td>
+                  <td className="p-3 text-[var(--muted)]">
+                    {c.org_number || c.address ? (
+                      <div className="flex flex-col gap-0.5 text-xs">
+                        <span className="font-mono">{c.org_number ?? "—"}</span>
+                        <span className="truncate max-w-[200px]">{c.address ?? "—"}</span>
+                        {(!c.org_number || !c.address) && (
+                          <span className="inline-flex items-center gap-1 text-amber-300">
+                            <AlertTriangle size={11} /> Ofullständig
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-amber-300 text-xs">
+                        <AlertTriangle size={11} /> Saknas (krävs för avtal)
+                      </span>
+                    )}
+                  </td>
                   <td className="p-3 text-[var(--muted)]">{c.contact_person ?? "—"}</td>
-                  <td className="p-3 text-[var(--muted)]">{c.industry ?? "—"}</td>
                   <td className="p-3"><Chip tone={statusTone(c.status)}>{statusLabel(c.status)}</Chip></td>
                   <td className="p-3 text-[var(--muted)]">
                     <div className="flex flex-col gap-0.5">
@@ -129,11 +152,16 @@ export default async function CustomersPage({
                       {!c.email && !c.phone && "—"}
                     </div>
                   </td>
+                  <td className="p-3 text-right">
+                    <div className="flex justify-end">
+                      <EditCustomerButton customer={c} />
+                    </div>
+                  </td>
                 </tr>
               ))}
               {customers.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-sm text-[var(--muted)]">
+                  <td colSpan={6} className="p-8 text-center text-sm text-[var(--muted)]">
                     {query ? "Inga kunder matchar sökningen." : "Inga kunder än."}
                   </td>
                 </tr>

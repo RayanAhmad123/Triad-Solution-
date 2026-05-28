@@ -17,16 +17,21 @@ export default async function OfferDetailPage({
   const [offerRes, customersRes] = await Promise.all([
     supabase
       .from("offers")
-      .select("*, customer:customers(id,name,contact_person,email,phone,website)")
+      .select("*, customer:customers(id,name,contact_person,email,phone,website,org_number,address)")
       .eq("id", id)
       .maybeSingle(),
-    supabase.from("customers").select("id,name").order("name"),
+    supabase.from("customers").select("id,name,org_number,address").order("name"),
   ]);
 
   const offer = offerRes.data as any;
   if (!offer) notFound();
 
-  const customers = (customersRes.data ?? []) as Array<{ id: string; name: string }>;
+  const customers = (customersRes.data ?? []) as Array<{
+    id: string;
+    name: string;
+    org_number: string | null;
+    address: string | null;
+  }>;
 
   return (
     <>

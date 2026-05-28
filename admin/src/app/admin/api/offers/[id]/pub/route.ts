@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { generateOfferWithSaasPdf } from "@/lib/contracts";
+import { generatePubPdf } from "@/lib/contracts";
 import { fetchOfferForContract, offerFileBase } from "../contract-data";
 import { missingContractFields } from "@/lib/offer-validate";
 
@@ -25,8 +25,8 @@ export async function GET(
     );
   }
 
-  const buffer = await generateOfferWithSaasPdf(offer);
-  const filename = `Offert_${offerFileBase(offer, id)}.pdf`;
+  const buffer = await generatePubPdf(offer);
+  const filename = `PUB-avtal_${offerFileBase(offer, id)}.pdf`;
 
   const blob = new Blob([buffer as unknown as BlobPart], { type: "application/pdf" });
   return new NextResponse(blob, {
