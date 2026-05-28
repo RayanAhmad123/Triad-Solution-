@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Plus } from "lucide-react";
 
-type Customer = { id: string; name: string };
+type Customer = { id: string; name: string; org_number?: string | null; address?: string | null };
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const plusDaysISO = (n: number) => {
@@ -35,10 +35,20 @@ export function NewOfferButton({ customers }: { customers: Customer[] }) {
     status: "draft",
   });
 
+  const selectedCustomer = customers.find((c) => c.id === f.customer_id);
+  const customerIncomplete =
+    !!selectedCustomer && (!selectedCustomer.org_number?.trim() || !selectedCustomer.address?.trim());
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!f.customer_id) {
+    if (!f.customer_id || !selectedCustomer) {
       alert("Välj en kund.");
+      return;
+    }
+    if (customerIncomplete) {
+      alert(
+        "Kunden saknar organisationsnummer och/eller adress. Dessa krävs för att kunna generera SaaS- och PUB-avtal. Komplettera kunden under Kunder först.",
+      );
       return;
     }
     setSaving(true);
@@ -133,6 +143,12 @@ export function NewOfferButton({ customers }: { customers: Customer[] }) {
                 {customers.length === 0 && (
                   <span className="text-[10px] text-amber-300 mt-1 block">
                     Inga kunder hittades. Skapa en kund först under Kunder.
+                  </span>
+                )}
+                {customerIncomplete && (
+                  <span className="text-[10px] text-amber-300 mt-1 block">
+                    Kunden saknar organisationsnummer och/eller adress — krävs för avtalen.
+                    Komplettera kunden under Kunder.
                   </span>
                 )}
               </label>
@@ -328,7 +344,7 @@ export function NewOfferButton({ customers }: { customers: Customer[] }) {
               </button>
               <button
                 type="submit"
-                disabled={saving}
+                disabled={saving || customerIncomplete}
                 className="rounded-btn bg-teal-500 hover:bg-teal-400 text-white px-4 py-2 text-sm font-semibold disabled:opacity-50 transition-colors"
               >
                 {saving ? "Skapar…" : "Skapa offert"}

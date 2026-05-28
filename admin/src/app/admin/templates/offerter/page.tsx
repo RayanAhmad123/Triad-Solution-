@@ -29,7 +29,7 @@ export default async function OffertListPage({
   const supabase = await createClient();
   const { data: customers } = await supabase
     .from("customers")
-    .select("id,name")
+    .select("id,name,org_number,address")
     .order("name");
 
   let q = supabase
