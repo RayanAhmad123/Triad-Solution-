@@ -190,6 +190,33 @@
       background: #333 !important;
     }
 
+    /* Language toggle — segmented SV/EN pill */
+    .nav-lang { display: flex; align-items: center; }
+    .lang-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      padding: 3px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 999px;
+      background: rgba(255,255,255,.04);
+      cursor: pointer;
+    }
+    .lang-toggle [data-lang-opt] {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      line-height: 1;
+      color: rgba(255,255,255,.5);
+      padding: 4px 9px;
+      border-radius: 999px;
+      transition: background .2s, color .2s;
+    }
+    .lang-toggle [data-lang-opt].active { background: #fff; color: #061a2e; }
+    #nav.light .lang-toggle { border-color: rgba(0,0,0,.15); background: rgba(0,0,0,.03); }
+    #nav.light .lang-toggle [data-lang-opt] { color: rgba(0,0,0,.45); }
+    #nav.light .lang-toggle [data-lang-opt].active { background: #000; color: #fff; }
+
     /* Hamburger */
     .hamburger {
       display: none;
@@ -1556,6 +1583,12 @@
     <li><a href="#about">Om oss</a></li>
     <li><a href="#services-pin-container">Tjänster</a></li>
     <li><a href="#contact">Kontakt</a></li>
+    <li class="nav-lang">
+      <button id="lang-toggle" class="lang-toggle" type="button" aria-label="Byt språk / Switch language">
+        <span data-lang-opt="sv">SV</span>
+        <span data-lang-opt="en">EN</span>
+      </button>
+    </li>
     <li>
       <a href="#contact" class="btn btn-sm btn-white nav-cta">Begär offert</a>
     </li>
@@ -2461,6 +2494,225 @@
   window.scrollTo(0, 0);
 
   /* ═══════════════════════════════════════════════
+     I18N — SV / EN language toggle
+  ═══════════════════════════════════════════════ */
+  let currentLang = localStorage.getItem('triad_lang') === 'en' ? 'en' : 'sv';
+
+  // Swedish source text → English. Keyed by the element's trimmed text content.
+  const DICT = {
+    // Nav
+    'Om oss': 'About',
+    'Tjänster': 'Services',
+    'Kontakt': 'Contact',
+    'Begär offert': 'Request a quote',
+    // Hero
+    'Skrolla ner': 'Scroll down',
+    // Services
+    'Det vi bygger.': 'What we build.',
+    'Skräddarsydda lösningar för din verksamhet — webb, mobil och sömlösa systemintegrationer.': 'Tailored solutions for your business — web, mobile and seamless system integrations.',
+    '← Tillbaka': '← Back',
+    'Alla': 'All',
+    'Webb, App & Marknadsföring': 'Web, App & Marketing',
+    'Integration': 'Integration',
+    'Cybersäkerhet': 'Cybersecurity',
+    'Försäljning': 'Sales',
+    'Försäljning och handel': 'Sales & Commerce',
+    '3 tjänster': '3 services',
+    '1 tjänst': '1 service',
+    'Utforska →': 'Explore →',
+    'Webbapplikationer, mobilappar och datadriven marknadsföring — allt för er digitala närvaro och tillväxt.': 'Web applications, mobile apps and data-driven marketing — everything for your digital presence and growth.',
+    'Koppla ihop era befintliga system sömlöst — data flödar automatiskt utan manuellt arbete eller informationssilos.': 'Connect your existing systems seamlessly — data flows automatically with no manual work or information silos.',
+    'Proaktiv säkerhetsstrategi med penetrationstester, hotanalys och säker arkitektur som håller angripare borta.': 'A proactive security strategy with penetration testing, threat analysis and secure architecture that keeps attackers out.',
+    'E-handelslösningar, säljautomatisering och CRM-integrationer som ökar konvertering och förenklar säljprocessen.': 'E-commerce solutions, sales automation and CRM integrations that increase conversion and simplify the sales process.',
+    'Webbapplikationer': 'Web Applications',
+    'Mobilappar': 'Mobile Apps',
+    'Systemintegrationer': 'System Integrations',
+    'Marknadsföring och upplevelse': 'Marketing & Experience',
+    'Från interna verktyg och kundportaler till komplexa SaaS-plattformar — byggda exakt för era arbetsflöden.': 'From internal tools and customer portals to complex SaaS platforms — built exactly for your workflows.',
+    'Native och cross-platform appar för iOS och Android — snabba, intuitiva och vackra appar era kunder väljer varje dag.': 'Native and cross-platform apps for iOS and Android — fast, intuitive and beautiful apps your customers choose every day.',
+    'Koppla ihop era befintliga system — data flödar sömlöst utan manuellt arbete och informationssilos.': 'Connect your existing systems — data flows seamlessly with no manual work or information silos.',
+    'Skydda er verksamhet med proaktiv säkerhetsstrategi — penetrationstester, hotanalys och säker arkitektur som håller angripare borta.': 'Protect your business with a proactive security strategy — penetration testing, threat analysis and secure architecture that keeps attackers out.',
+    'Digitala kampanjer, varumärkesupplevelser och datadriven marknadsföring som skapar verkliga relationer med era kunder.': 'Digital campaigns, brand experiences and data-driven marketing that build real relationships with your customers.',
+    'E-handelslösningar, säljautomatisering och CRM-integrationer som ökar konvertering och förenklar hela säljprocessen.': 'E-commerce solutions, sales automation and CRM integrations that increase conversion and simplify the entire sales process.',
+    'Brandvägg': 'Firewall',
+    // Why
+    'Det vi tror på.': 'What we believe in.',
+    'Ärlighet framför allt': 'Honesty above all',
+    'Teknik i världsklass': 'World-class technology',
+    'Långsiktigt partnerskap': 'Long-term partnership',
+    'Tid och budget': 'On time and on budget',
+    'Säkerhet by design': 'Security by design',
+    'Mätbara resultat': 'Measurable results',
+    'Vi säger ifrån om en idé inte håller. Vi överlevererar aldrig löften och underleverar aldrig resultat. Ni ska alltid veta exakt var projektet befinner sig.': "We speak up when an idea doesn't hold up. We never over-promise and never under-deliver. You should always know exactly where the project stands.",
+    'Vi väljer alltid rätt verktyg för jobbet — inte det som är trendigt. Modern arkitektur, skalbar kod och säkra system som håller över tid.': 'We always choose the right tool for the job — not whatever is trendy. Modern architecture, scalable code and secure systems that last.',
+    'Vi ser oss som er tekniska partner, inte en leverantör. Det betyder att vi finns kvar efter lansering — för support, vidareutveckling och strategi.': 'We see ourselves as your technical partner, not a vendor. That means we stay on after launch — for support, further development and strategy.',
+    'Vi levererar i tid och håller budget. Det kräver noggrann planering, tydliga milstolpar och transparens längs hela vägen. Det är vår standard.': "We deliver on time and on budget. That requires careful planning, clear milestones and transparency all the way. It's our standard.",
+    'Säkerhet är inte en eftertanke. Från autentisering till datalagring bygger vi säkert från grunden — i enlighet med GDPR och branschstandard.': 'Security is not an afterthought. From authentication to data storage we build securely from the ground up — in line with GDPR and industry standards.',
+    'Vi sätter upp mätbara mål innan projektet startar och följer upp resultaten efter lansering. Mjukvara ska generera ett konkret affärsvärde.': 'We set measurable goals before the project starts and follow up on results after launch. Software should generate concrete business value.',
+    // How we work
+    'En process byggd för resultat.': 'A process built for results.',
+    'Steg ett': 'Step one',
+    'Steg två': 'Step two',
+    'Steg tre': 'Step three',
+    'Konsultation': 'Consultation',
+    'Design & Utveckling': 'Design & Development',
+    'Leverans & Support': 'Delivery & Support',
+    'Vi börjar alltid med att lyssna. Genom ett kostnadsfritt inledande möte kartlägger vi era behov, mål och tekniska utmaningar — och levererar ett tydligt uppdragsdokument innan arbetet påbörjas.': 'We always start by listening. Through a free initial meeting we map out your needs, goals and technical challenges — and deliver a clear scope document before work begins.',
+    'Klickbara prototyper skapas innan en enda rad kod skrivs. Sedan bygger vi i agila tvåveckorssprint med regelbundna demos, kodgranskning av minst två utvecklare och säkerhet inbyggt från dag ett.': 'Clickable prototypes are created before a single line of code is written. Then we build in agile two-week sprints with regular demos, code review by at least two developers and security built in from day one.',
+    'Vi driftsätter lösningen, utbildar er personal och säkerställer en smidig övergång. Därefter erbjuder vi löpande support och prestandaövervakning — vi är er tekniska avdelning, inte en extern leverantör.': 'We deploy the solution, train your staff and ensure a smooth transition. After that we offer ongoing support and performance monitoring — we are your technical department, not an external vendor.',
+    'Behovsanalys': 'Needs analysis',
+    'Kostnadsfritt möte': 'Free meeting',
+    'Uppdragsdokument': 'Scope document',
+    'Prototyp': 'Prototype',
+    'Agil sprint': 'Agile sprint',
+    'Kodgranskning': 'Code review',
+    'Driftsättning': 'Deployment',
+    'Utbildning': 'Training',
+    '24/7 Support': '24/7 Support',
+    // About
+    'Vi är ett techbolag som hjälper företag att identifiera och lösa affärskritiska problem genom skräddarsydda tekniska lösningar. Istället för standardiserade produkter utvecklar vi system, automationer och digitala verktyg anpassade efter varje kunds unika behov och mål.': "We are a tech company that helps businesses identify and solve business-critical problems through tailored technical solutions. Instead of off-the-shelf products, we develop systems, automations and digital tools adapted to each client's unique needs and goals.",
+    'Vår modell kombinerar en initial implementation med fortsatt sammarbete för drift, support och kontinuerlig optimering. Det säkerställer att våra lösningar inte bara fungerar idag, utan även utvecklas i takt med kundens verksamhet.': "Our model combines an initial implementation with continued collaboration for operations, support and ongoing optimization. This ensures our solutions not only work today, but evolve together with the client's business.",
+    'Genom att fokusera på resultat, effektivisering och långsiktigt värde hjälper vi företag att spara tid, minska kostnader och skapa tillväxt.': 'By focusing on results, efficiency and long-term value, we help businesses save time, reduce costs and create growth.',
+    '7 år': '7 yrs',
+    'Kombinerad erfarenhet': 'Combined experience',
+    'Support & drift': 'Support & operations',
+    // Contact
+    'Redo att ta nästa steg?': 'Ready to take the next step?',
+    'Fyll i formuläret för ett kostnadsfritt inledande möte.': 'Fill in the form for a free initial meeting.',
+    'Förnamn': 'First name',
+    'Efternamn': 'Last name',
+    'E-post': 'Email',
+    'Telefon': 'Phone',
+    'Företag': 'Company',
+    'Meddelande': 'Message',
+    // Footer
+    '© 2026 Triad Solutions AB. Alla rättigheter förbehållna.': '© 2026 Triad Solutions AB. All rights reserved.',
+    'Integritetspolicy': 'Privacy Policy',
+    'Villkor': 'Terms',
+    // Cookie banner
+    'Vi använder cookies för att förbättra din upplevelse. Läs vår': 'We use cookies to improve your experience. Read our',
+    'integritetspolicy': 'privacy policy',
+    'Neka': 'Decline',
+    'Acceptera': 'Accept',
+    // Privacy modal
+    'Integritetspolicy – Triad AB': 'Privacy Policy – Triad AB',
+    'Senast uppdaterad: 2026-04-12': 'Last updated: 2026-04-12',
+    '1. Allmänt': '1. General',
+    'Denna policy beskriver hur Triad AB samlar in och använder personuppgifter som delas med oss via vår hemsida. Vårt mål är att vara så transparenta som möjligt med hur vi hanterar din information.': 'This policy describes how Triad AB collects and uses personal data shared with us via our website. Our goal is to be as transparent as possible about how we handle your information.',
+    '2. Vilka uppgifter samlar vi in?': '2. What data do we collect?',
+    'När du använder vår hemsida eller kontaktar oss kan vi komma att samla in följande uppgifter:': 'When you use our website or contact us, we may collect the following data:',
+    'Kontaktuppgifter:': 'Contact details:',
+    'Namn, e-postadress, telefonnummer och eventuellt företagsnamn som du anger i vårt kontaktformulär.': 'Name, email address, phone number and any company name you provide in our contact form.',
+    'Meddelandehistorik:': 'Message history:',
+    'Den information du själv väljer att skriva i ditt meddelande till oss.': 'The information you choose to write in your message to us.',
+    'Teknisk data:': 'Technical data:',
+    'IP-adress, typ av enhet och webbläsare samt hur du interagerar med sidan (via cookies).': 'IP address, device and browser type, and how you interact with the site (via cookies).',
+    '3. Varför samlar vi in dessa uppgifter?': '3. Why do we collect this data?',
+    'Vi behandlar din data för att:': 'We process your data in order to:',
+    'Kunna återkoppla på dina frågor och förfrågningar.': 'Respond to your questions and inquiries.',
+    'Etablera en affärskontakt om du visat intresse för våra tjänster.': 'Establish a business relationship if you have shown interest in our services.',
+    'Förbättra användarupplevelsen på vår hemsida genom statistik och analys.': 'Improve the user experience on our website through statistics and analysis.',
+    '4. Rättslig grund': '4. Legal basis',
+    'Vi behandlar dina personuppgifter med stöd av intresseavvägning. Vi bedömer att vårt berättigade intresse av att kunna svara på dina frågor och kommunicera med dig som visat intresse för oss väger tyngre än det eventuella integritetsintrång som behandlingen innebär.': 'We process your personal data on the basis of a legitimate interest assessment. We consider that our legitimate interest in being able to answer your questions and communicate with you, who have shown interest in us, outweighs any privacy intrusion the processing may entail.',
+    '5. Hur länge sparar vi din data?': '5. How long do we keep your data?',
+    'Kontaktförfrågningar:': 'Contact requests:',
+    'Vi sparar dina uppgifter så länge det är nödvändigt för att hjälpa dig med ditt ärende. Om kontakten inte leder till ett kundförhållande raderas uppgifterna efter 12 månader.': 'We keep your data for as long as necessary to help you with your matter. If the contact does not lead to a customer relationship, the data is deleted after 12 months.',
+    'Analysdata:': 'Analytics data:',
+    'Information från cookies rensas regelbundet enligt de inställningar som finns i våra analysverktyg.': 'Information from cookies is cleared regularly according to the settings in our analytics tools.',
+    '6. Vilka delar vi informationen med?': '6. Who do we share the information with?',
+    'Vi säljer aldrig dina uppgifter. Vi använder dock vissa underleverantörer för att hemsidan ska fungera:': 'We never sell your data. However, we use certain subcontractors to keep the website running:',
+    'Webbhotell:': 'Web hosting:',
+    'Där hemsidan och dess data lagras.': 'Where the website and its data are stored.',
+    'E-postleverantör:': 'Email provider:',
+    'För att ta emot och skicka meddelanden till dig.': 'To receive and send messages to you.',
+    'Analysverktyg:': 'Analytics tools:',
+    'Google Analytics, för att se hur många som besöker sidan.': 'Google Analytics, to see how many people visit the site.',
+    '7. Dina rättigheter': '7. Your rights',
+    'Du har när som helst rätt att:': 'You have the right at any time to:',
+    'Begära ut ett registerutdrag på den data vi har om dig.': 'Request a copy of the data we hold about you.',
+    'Be oss rätta felaktiga uppgifter.': 'Ask us to correct inaccurate data.',
+    'Be oss radera din information ur våra system.': 'Ask us to delete your information from our systems.',
+    'För att utöva dina rättigheter, kontakta oss på:': 'To exercise your rights, contact us at:',
+    // Terms modal
+    'Allmänna villkor': 'General Terms',
+    'Dessa villkor gäller för alla tjänster som tillhandahålls av Triad Solutions AB, org. nr. [XXXXXX-XXXX], ("Triad Solutions").': 'These terms apply to all services provided by Triad Solutions AB, company reg. no. [XXXXXX-XXXX], ("Triad Solutions").',
+    'Triad Solutions levererar skräddarsydda mjukvarulösningar enligt överenskommelse i separat projektavtal. Varje uppdrag regleras av ett skriftligt avtal som specificerar omfattning, pris och tidsplan.': 'Triad Solutions delivers tailored software solutions as agreed in a separate project contract. Each assignment is governed by a written agreement specifying scope, price and timeline.',
+    'Betalning': 'Payment',
+    'Fakturering sker enligt det avtal som tecknats per projekt. Betalningsvillkor är 30 dagar netto om inget annat avtalats.': 'Invoicing is carried out according to the contract signed per project. Payment terms are 30 days net unless otherwise agreed.',
+    'Immateriella rättigheter': 'Intellectual property',
+    'Kunden erhåller full äganderätt till levererad kod och material efter slutbetalning. Triad Solutions förbehåller sig rätten att referera till projektet i marknadsföringssyfte om inte annat avtalas.': 'The client receives full ownership of delivered code and material after final payment. Triad Solutions reserves the right to reference the project for marketing purposes unless otherwise agreed.',
+    'Ansvarsbegränsning': 'Limitation of liability',
+    'Triad Solutions ansvar är begränsat till det belopp som fakturerats för det aktuella projektet.': "Triad Solutions' liability is limited to the amount invoiced for the project in question.",
+    'Senast uppdaterade: April 2026': 'Last updated: April 2026'
+  };
+
+  // Strings rendered/changed by JS at runtime → [sv, en].
+  const RT = {
+    title:       ['Triad Solutions — Skräddarsydd mjukvara för SMB', 'Triad Solutions — Tailored software for SMBs'],
+    menu:        ['Öppna meny', 'Open menu'],
+    headline:    ['Vi bygger mjukvara som faktiskt gör skillnad.', 'We build software that actually makes a difference.'],
+    formSending: ['Skickar...', 'Sending...'],
+    formSent:    ['Skickat! Vi återkommer snart.', "Sent! We'll be in touch soon."],
+    formError:   ['Något gick fel. Försök igen.', 'Something went wrong. Try again.']
+  };
+  const t = (k) => RT[k][currentLang === 'en' ? 1 : 0];
+
+  // Placeholders → [sv, en], keyed by input id.
+  const PH = {
+    fname:   ['Erik', 'John'],
+    lname:   ['Svensson', 'Smith'],
+    email:   ['erik@foretaget.se', 'john@company.com'],
+    company: ['Ert företagsnamn', 'Your company name'],
+    message: ['Berätta kort om er utmaning eller idé...', 'Tell us briefly about your challenge or idea...']
+  };
+
+  // Built once from the (Swedish) DOM: snapshots each translatable text node.
+  let i18nNodes = [];
+  function buildI18nIndex() {
+    const skip = new Set(['SCRIPT', 'STYLE']);
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+      acceptNode(n) {
+        const p = n.parentNode;
+        if (!p || skip.has(p.nodeName)) return NodeFilter.FILTER_REJECT;
+        const k = n.nodeValue.trim();
+        return (k && DICT[k] !== undefined) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+      }
+    });
+    const out = [];
+    let nd;
+    while ((nd = walker.nextNode())) {
+      const sv = nd.nodeValue, k = sv.trim();
+      out.push({ node: nd, sv, en: sv.replace(k, () => DICT[k]) });
+    }
+    return out;
+  }
+
+  function applyLang(lang) {
+    currentLang = lang === 'en' ? 'en' : 'sv';
+    const en = currentLang === 'en';
+
+    i18nNodes.forEach(o => { o.node.nodeValue = en ? o.en : o.sv; });
+
+    Object.keys(PH).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.placeholder = PH[id][en ? 1 : 0];
+    });
+
+    document.documentElement.lang = currentLang;
+    document.title = t('title');
+    const hb = document.getElementById('hamburger');
+    if (hb) hb.setAttribute('aria-label', t('menu'));
+
+    document.querySelectorAll('#lang-toggle [data-lang-opt]').forEach(s => {
+      s.classList.toggle('active', s.dataset.langOpt === currentLang);
+    });
+
+    if (typeof setHeadline === 'function') setHeadline();
+    if (typeof onScroll === 'function') onScroll();   // refresh section indicator label
+    localStorage.setItem('triad_lang', currentLang);
+  }
+
+  /* ═══════════════════════════════════════════════
      ELEMENT REFS
   ═══════════════════════════════════════════════ */
   const navbar        = document.getElementById('nav');
@@ -2551,11 +2803,11 @@
 
     // ── Global section indicator ──
     const sectionMap = [
-      { id: 'services-pin-container', label: 'Tjänster' },
-      { id: 'why-pin-container',      label: 'Varför Triad' },
-      { id: 'how-we-work',            label: 'Hur vi jobbar' },
-      { id: 'about',                  label: 'Om oss' },
-      { id: 'contact',                label: 'Kontakt' },
+      { id: 'services-pin-container', sv: 'Tjänster',      en: 'Services' },
+      { id: 'why-pin-container',      sv: 'Varför Triad',  en: 'Why Triad' },
+      { id: 'how-we-work',            sv: 'Hur vi jobbar', en: 'How we work' },
+      { id: 'about',                  sv: 'Om oss',        en: 'About' },
+      { id: 'contact',                sv: 'Kontakt',       en: 'Contact' },
     ];
     const indicator = document.getElementById('section-indicator');
     const vh = window.innerHeight;
@@ -2564,7 +2816,7 @@
       const el = document.getElementById(s.id);
       if (!el) continue;
       const r = el.getBoundingClientRect();
-      if (r.top < vh * 0.45 && r.bottom > 72) activeLabel = s.label;
+      if (r.top < vh * 0.45 && r.bottom > 72) activeLabel = currentLang === 'en' ? s.en : s.sv;
     }
     if (activeLabel) {
       if (indicator.textContent !== activeLabel) indicator.textContent = activeLabel;
@@ -2650,11 +2902,12 @@
   /* ═══════════════════════════════════════════════
      ABOUT HEADLINE — word-by-word reveal
   ═══════════════════════════════════════════════ */
-  (function buildHeadline() {
-    const words = ['Vi', 'bygger', 'mjukvara', 'som', 'faktiskt', 'gör', 'skillnad.'];
-    const el    = document.getElementById('about-headline');
+  function setHeadline() {
+    const el = document.getElementById('about-headline');
+    if (!el) return;
+    el.innerHTML = '';
     el.style.cssText = 'background:linear-gradient(175deg,#fff 30%,#666 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;';
-    words.forEach((w, i) => {
+    t('headline').split(' ').forEach((w, i) => {
       const wrap  = document.createElement('span');
       wrap.className = 'word-reveal';
       wrap.style.transitionDelay = (0.07 * i) + 's';
@@ -2663,7 +2916,15 @@
       wrap.appendChild(inner);
       el.appendChild(wrap);
     });
+    // If the section is already on screen (e.g. after a language toggle), reveal immediately.
+    const r = el.getBoundingClientRect();
+    if (r.top < window.innerHeight && r.bottom > 0) {
+      el.querySelectorAll('.word-reveal').forEach(w => w.classList.add('in'));
+    }
+  }
 
+  (function observeHeadline() {
+    const el = document.getElementById('about-headline');
     const obs = new IntersectionObserver(entries => {
       entries.forEach(e => {
         if (e.isIntersecting) {
@@ -2760,7 +3021,7 @@
   document.getElementById('contactForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const btn = this.querySelector('.submit-btn');
-    btn.textContent = 'Skickar...';
+    btn.textContent = t('formSending');
     btn.disabled = true;
 
     const data = new FormData(this);
@@ -2771,14 +3032,14 @@
         headers: { 'Accept': 'application/json' }
       });
       if (res.ok) {
-        btn.textContent = 'Skickat! Vi återkommer snart.';
+        btn.textContent = t('formSent');
         this.reset();
       } else {
-        btn.textContent = 'Något gick fel. Försök igen.';
+        btn.textContent = t('formError');
         btn.disabled = false;
       }
     } catch {
-      btn.textContent = 'Något gick fel. Försök igen.';
+      btn.textContent = t('formError');
       btn.disabled = false;
     }
   });
@@ -2831,6 +3092,15 @@
       openModal('modal-privacy');
     });
   })();
+
+  /* ═══════════════════════════════════════════════
+     I18N — init + toggle wiring
+  ═══════════════════════════════════════════════ */
+  i18nNodes = buildI18nIndex();   // snapshot Swedish source before any swap
+  applyLang(currentLang);
+  document.getElementById('lang-toggle').addEventListener('click', () => {
+    applyLang(currentLang === 'en' ? 'sv' : 'en');
+  });
 </script>
 
 </body>
