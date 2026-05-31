@@ -39,6 +39,7 @@ export type PubSubCtx = {
   agreementDate: string | null; // ISO eller sv-SE
   startDate: string | null;
   offerNumber: string | null;
+  agreementNumber: string | null; // AVT-YYYY-NNN — vävs in i "Relaterat avtal"-raden
 };
 
 // Hjälpfunktioner för fallback-värden (placeholders behålls om data saknas)
@@ -86,12 +87,40 @@ export const PUB_SUB_RULES: SubRule[] = [
   { match: "[ADRESS]", n: 1, value: (c) => c.customer?.name ? "" : "[ADRESS]" }, // kundadress hanteras i Villkor, ej i PUB
 ];
 
+// Generella textomskrivningar (literal find/replace) som körs EFTER
+// placeholder-substitueringen. Mallar refererar ofta till "SaaS-avtal" men
+// vi vill att slutdokumenten genomgående pratar om "avtal" och att
+// "Relaterat avtal"-raden visar det faktiska avtalsnumret.
+function textRewrites(ctx: PubSubCtx): [RegExp | string, string][] {
+  const numRef = ctx.agreementNumber ? ` (${ctx.agreementNumber})` : "";
+  return [
+    // Meta-label
+    ["Relaterat SaaS-avtal:", "Relaterat avtal:"],
+    // Värdet på samma rad: "Ingår som Bilaga 2 till SaaS-avtal daterat …"
+    [
+      /till\s+SaaS-avtal\s+(daterat)/g,
+      `till avtal${numRef} $1`,
+    ],
+    // Generell fallback om mallen råkar säga "SaaS-avtalet" (bestämd form)
+    [/SaaS-avtalet/g, "avtalet"],
+  ];
+}
+
+function applyRewrites(text: string, rewrites: [RegExp | string, string][]): string {
+  let out = text;
+  for (const [find, repl] of rewrites) {
+    out = typeof find === "string" ? out.split(find).join(repl) : out.replace(find, repl);
+  }
+  return out;
+}
+
 // Applicerar regler ordnings-baserat. Returnerar en substitueringsfunktion
 // som anropas en gång per textstycke (paragrafer, meta-segments, bullets,
 // tabellceller). Funktionen håller egen räknare över hur många gånger varje
 // placeholder redan substituerats.
 export function makeSubstitutor(ctx: PubSubCtx): (text: string) => string {
   const counts: Map<string, number> = new Map();
+  const rewrites = textRewrites(ctx);
 
   return (text: string): string => {
     let out = text;
@@ -120,7 +149,7 @@ export function makeSubstitutor(ctx: PubSubCtx): (text: string) => string {
       out = out.slice(0, earliest) + replacement + out.slice(earliest + earliestRule.match.length);
       counts.set(earliestRule.match, earliestN);
     }
-    return out;
+    return applyRewrites(out, rewrites);
   };
 }
 
@@ -147,12 +176,12 @@ export function substituteBlocks(blocks: Block[], ctx: PubSubCtx): Block[] {
         const newRows: MetaRow[] = b.rows.map((r) => {
           if (r.segments) {
             return {
-              label: r.label,
+              label: sub(r.label),
               value: "",
               segments: r.segments.map((seg) => ({ ...seg, text: sub(seg.text) })),
             };
           }
-          return { label: r.label, value: sub(r.value) };
+          return { label: sub(r.label), value: sub(r.value) };
         });
         out.push({ t: "meta", rows: newRows });
         break;
@@ -201,7 +230,7 @@ export async function generatePubFromTemplatePdf(
   drawContractCover(
     p,
     logo,
-    "AVTAL",
+    "",
     "PERSONUPPGIFTSBITRÄDESAVTAL",
     templateName || "GDPR Artikel 28",
   );

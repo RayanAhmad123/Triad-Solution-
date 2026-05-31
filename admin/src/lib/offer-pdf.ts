@@ -268,10 +268,13 @@ export function drawOfferContent(
     font: fontBold, size: 28, color: DARK,
     width: CONTENT_W, align: "right",
   });
-  p.drawText("Skraddarsydd mjukvara for SMB", MARGIN, MARGIN + 42, {
-    font: fontItalic, size: 9, color: BRAND,
-    width: CONTENT_W, align: "right",
-  });
+  // Slogan visas bara på offerten — avtalsförsättet hålls renare.
+  if (!isAgreement) {
+    p.drawText("Skraddarsydd mjukvara for SMB", MARGIN, MARGIN + 42, {
+      font: fontItalic, size: 9, color: BRAND,
+      width: CONTENT_W, align: "right",
+    });
+  }
 
   // Teal divider
   const dividerY = MARGIN + 78;
@@ -358,33 +361,8 @@ export function drawOfferContent(
     p.cursor += 16;
   }
 
-  // ====== SPECIFIKATION ======
-  p.newPageIfNeeded(140);
-  p.cursor = drawSectionHeading(p, "SPECIFIKATION", p.cursor);
-
-  // Tabellbredder
-  const cBeskrivning = { x: MARGIN, w: 260 };
-  const cAntal       = { x: MARGIN + 260, w: 60 };
-  const cApris       = { x: MARGIN + 320, w: 100 };
-  const cBelopp      = { x: MARGIN + 420, w: CONTENT_W - 420 };
-
-  const rowH = 22;
-  // Header
-  p.drawRect(MARGIN, p.cursor, CONTENT_W, rowH, DARK);
-  p.drawText("Beskrivning", cBeskrivning.x + 6, p.cursor + 7, {
-    font: fontBold, size: 9, color: WHITE, width: cBeskrivning.w - 12,
-  });
-  p.drawText("Antal", cAntal.x, p.cursor + 7, {
-    font: fontBold, size: 9, color: WHITE, width: cAntal.w, align: "center",
-  });
-  p.drawText(`À-pris (${offer.currency})`, cApris.x, p.cursor + 7, {
-    font: fontBold, size: 9, color: WHITE, width: cApris.w - 6, align: "right",
-  });
-  p.drawText(`Belopp (${offer.currency})`, cBelopp.x, p.cursor + 7, {
-    font: fontBold, size: 9, color: WHITE, width: cBelopp.w - 6, align: "right",
-  });
-  p.cursor += rowH;
-
+  // ====== PRISER ======
+  // Beräkna alla pris-värden upfront så vi kan layouta korten parallellt.
   const projPrice = offer.project_price ?? 0;
   const monthPrice = offer.monthly_price ?? 0;
   const projDiscPct = clampPct(Number(offer.project_discount_pct ?? 0));
@@ -400,112 +378,48 @@ export function drawOfferContent(
   const monthVat = monthAfter * (vat / 100);
   const monthTotal = monthAfter + monthVat;
 
-  const drawSpecRow = (
-    desc: string,
-    qty: number,
-    unit: number,
-    amount: number,
-    bg: ReturnType<typeof rgb> | null,
-  ) => {
-    if (bg) p.drawRect(MARGIN, p.cursor, CONTENT_W, rowH, bg);
-    // borders
-    p.drawLine(MARGIN, MARGIN + CONTENT_W, p.cursor, BORDER, 0.5);
-    p.drawLine(MARGIN, MARGIN + CONTENT_W, p.cursor + rowH, BORDER, 0.5);
-    p.drawText(desc, cBeskrivning.x + 6, p.cursor + 7, {
-      font: fontBold, size: 10, width: cBeskrivning.w - 12,
-    });
-    p.drawText(String(qty), cAntal.x, p.cursor + 7, {
-      size: 10, width: cAntal.w, align: "center",
-    });
-    p.drawText(fmtMoney(unit), cApris.x, p.cursor + 7, {
-      size: 10, width: cApris.w - 6, align: "right",
-    });
-    p.drawText(fmtMoney(amount), cBelopp.x, p.cursor + 7, {
-      font: fontBold, size: 10, width: cBelopp.w - 6, align: "right",
-    });
-    p.cursor += rowH;
-  };
+  p.newPageIfNeeded(240);
+  p.cursor = drawSectionHeading(p, "PRISER", p.cursor);
 
-  drawSpecRow("Projektkostnad (engångsavgift)", 1, projPrice, projPrice, null);
-  drawSpecRow("Underhållsavgift (per månad)", 1, monthPrice, monthPrice, LIGHT);
-  p.cursor += 14;
-
-  // ====== ENGÅNGSKOSTNAD ======
-  p.newPageIfNeeded(140);
-  p.cursor = drawSubsectionHeading(p, "ENGÅNGSKOSTNAD (faktureras vid projektstart)", p.cursor);
-
-  const totalsLabelX = MARGIN + 220;
-  const totalsLabelW = 240;
-  const totalsValueX = MARGIN + 460;
-  const totalsValueW = CONTENT_W - 460 + MARGIN - 8;
-
-  const drawTotalRow = (
-    label: string,
-    value: string,
-    opts: { highlight?: ReturnType<typeof rgb>; tone?: ReturnType<typeof rgb>; divider?: boolean } = {},
-  ) => {
-    const h = opts.highlight ? 24 : 18;
-    if (opts.highlight) {
-      p.drawRect(totalsLabelX, p.cursor, CONTENT_W - 220 + MARGIN, h, opts.highlight);
-      p.drawText(label, totalsLabelX + 8, p.cursor + 7, {
-        font: fontBold, size: 11, color: WHITE, width: totalsLabelW - 16, align: "right",
-      });
-      p.drawText(value, totalsValueX, p.cursor + 7, {
-        font: fontBold, size: 11, color: WHITE, width: totalsValueW, align: "right",
-      });
-    } else {
-      p.drawText(label, totalsLabelX, p.cursor + 5, {
-        font: fontBold, size: 10, color: opts.tone ?? BLACK,
-        width: totalsLabelW, align: "right",
-      });
-      p.drawText(value, totalsValueX, p.cursor + 5, {
-        size: 10, color: opts.tone ?? BLACK,
-        width: totalsValueW, align: "right",
-      });
-      if (opts.divider) {
-        p.drawLine(totalsLabelX, MARGIN + CONTENT_W, p.cursor + h - 1, BORDER, 0.5);
-      }
-    }
-    p.cursor += h;
-  };
-
-  drawTotalRow("Delsumma", fmtMoney(projPrice), { divider: true });
-  if (projDiscPct > 0) {
-    drawTotalRow(`Rabatt (${projDiscPct} %)`, `-${fmtMoney(projDiscount)}`, {
-      divider: true, tone: ROSE,
-    });
-    drawTotalRow("Efter rabatt", fmtMoney(projAfter), { divider: true });
-  }
-  drawTotalRow(`Moms (${vat} %)`, fmtMoney(projVat), { divider: true });
-  drawTotalRow("TOTALT (inkl. moms)", `${fmtMoney(projTotal)} ${offer.currency}`, {
-    highlight: DARK,
+  // Två kort sida vid sida — engångskostnad (DARK accent) + månad (BRAND).
+  const cardGap = 14;
+  const cardW = (CONTENT_W - cardGap) / 2;
+  const projBottom = drawPricingCard(p, {
+    x: MARGIN,
+    y: p.cursor,
+    w: cardW,
+    accent: DARK,
+    title: "ENGÅNGSKOSTNAD",
+    subtitle: "faktureras vid projektstart",
+    unit: projPrice,
+    discount: projDiscount,
+    discountPct: projDiscPct,
+    afterDiscount: projAfter,
+    vat: projVat,
+    total: projTotal,
+    vatRate: vat,
+    currency: offer.currency,
+    totalLabel: "TOTALT INKL. MOMS",
   });
-  p.cursor += 12;
-
-  // ====== MÅNADSKOSTNAD ======
-  p.newPageIfNeeded(160);
-  p.cursor = drawSubsectionHeading(p, "ÅTERKOMMANDE MÅNADSKOSTNAD (faktureras månadsvis)", p.cursor);
-
-  drawTotalRow("Per månad exkl. moms", fmtMoney(monthPrice), { divider: true });
-  if (monthDiscPct > 0) {
-    drawTotalRow(`Rabatt (${monthDiscPct} %)`, `-${fmtMoney(monthDiscount)}`, {
-      divider: true, tone: ROSE,
-    });
-    drawTotalRow("Per månad efter rabatt", fmtMoney(monthAfter), { divider: true });
-  }
-  drawTotalRow(`Moms (${vat} %)`, fmtMoney(monthVat), { divider: true });
-  drawTotalRow("PER MÅNAD (inkl. moms)", `${fmtMoney(monthTotal)} ${offer.currency}`, {
-    highlight: BRAND,
+  const monthBottom = drawPricingCard(p, {
+    x: MARGIN + cardW + cardGap,
+    y: p.cursor,
+    w: cardW,
+    accent: BRAND,
+    title: "ÅTERKOMMANDE",
+    subtitle: "faktureras månadsvis",
+    unit: monthPrice,
+    discount: monthDiscount,
+    discountPct: monthDiscPct,
+    afterDiscount: monthAfter,
+    vat: monthVat,
+    total: monthTotal,
+    vatRate: vat,
+    currency: offer.currency,
+    totalLabel: "PER MÅNAD INKL. MOMS",
+    footnote: `Årskostnad inkl. moms: ${fmtMoney(monthTotal * 12)} ${offer.currency}`,
   });
-
-  // Årskostnad (info-rad)
-  p.drawText("Årskostnad (inkl. moms)", totalsLabelX, p.cursor + 5, {
-    font: fontItalic, size: 9, color: GREY, width: totalsLabelW, align: "right",
-  });
-  p.drawText(`${fmtMoney(monthTotal * 12)} ${offer.currency}`, totalsValueX, p.cursor + 5, {
-    font: fontItalic, size: 9, color: GREY, width: totalsValueW, align: "right",
-  });
-  p.cursor += 22;
+  p.cursor = Math.max(projBottom, monthBottom) + 14;
 
   // ====== ÖVRIGA KOSTNADER (conditional) ======
   if (offer.other_costs && offer.other_costs.trim()) {
@@ -580,15 +494,6 @@ export function drawSectionHeading(p: Pdf, label: string, topY: number): number 
   return lineY + 8;
 }
 
-function drawSubsectionHeading(p: Pdf, label: string, topY: number): number {
-  p.drawText(label, MARGIN, topY, {
-    font: p.fontBold, size: 10, color: DARK,
-  });
-  const lineY = topY + 14;
-  p.drawLine(MARGIN, MARGIN + CONTENT_W, lineY, DARK, 0.5);
-  return lineY + 6;
-}
-
 function drawSignatureBlock(p: Pdf, x: number, topY: number, w: number, label: string) {
   p.drawLine(x, x + w, topY, BLACK, 0.5);
   p.drawText("Ort och datum", x, topY + 4, {
@@ -598,4 +503,108 @@ function drawSignatureBlock(p: Pdf, x: number, topY: number, w: number, label: s
   p.drawLine(x, x + w, sigY, BLACK, 0.5);
   p.drawText(label, x, sigY + 4, { font: p.font, size: 8, color: GREY });
   p.drawText("[Namnförtydligande]", x, sigY + 16, { font: p.font, size: 8, color: GREY });
+}
+
+// Kort med pris-uppdelning: header (accent-strip + titel + undertitel),
+// breakdown-rader (delsumma, ev. rabatt, ev. efter rabatt, moms), färgad
+// total-rad i botten, och valfri fotnot. Returnerar y-koordinaten just under
+// kortet så caller kan synca side-by-side-höjd.
+type PricingCardInput = {
+  x: number;
+  y: number;
+  w: number;
+  accent: ReturnType<typeof rgb>;
+  title: string;
+  subtitle: string;
+  unit: number;
+  discount: number;
+  discountPct: number;
+  afterDiscount: number;
+  vat: number;
+  total: number;
+  vatRate: number;
+  currency: string;
+  totalLabel: string;
+  footnote?: string;
+};
+
+function drawPricingCard(p: Pdf, c: PricingCardInput): number {
+  const padX = 12;
+  const headerH = 38;
+  const rowH = 18;
+  const totalH = 36;
+  const footH = c.footnote ? 18 : 0;
+
+  // Bygg radlista (varierar beroende på om rabatt finns)
+  type Row = { label: string; value: string; tone?: ReturnType<typeof rgb>; bold?: boolean };
+  const rows: Row[] = [
+    { label: "Delsumma", value: fmtMoney(c.unit) },
+  ];
+  if (c.discountPct > 0) {
+    rows.push({
+      label: `Rabatt (${c.discountPct} %)`,
+      value: `-${fmtMoney(c.discount)}`,
+      tone: ROSE,
+    });
+    rows.push({
+      label: "Efter rabatt",
+      value: fmtMoney(c.afterDiscount),
+      bold: true,
+    });
+  }
+  rows.push({ label: `Moms (${c.vatRate} %)`, value: fmtMoney(c.vat) });
+
+  const bodyH = rows.length * rowH + 8;
+  const cardH = headerH + bodyH + totalH + footH;
+
+  // Ram + bakgrund
+  p.drawRect(c.x, c.y, c.w, cardH, LIGHT, { color: BORDER, width: 0.5 });
+  // Accent-strip i topp
+  p.drawRect(c.x, c.y, c.w, 3, c.accent);
+
+  // Titel + undertitel
+  p.drawText(c.title, c.x + padX, c.y + 13, {
+    font: p.fontBold, size: 10, color: DARK, width: c.w - padX * 2,
+  });
+  p.drawText(c.subtitle, c.x + padX, c.y + 26, {
+    font: p.fontItalic, size: 8, color: GREY, width: c.w - padX * 2,
+  });
+
+  // Body-rader
+  let ry = c.y + headerH;
+  for (const r of rows) {
+    p.drawText(r.label, c.x + padX, ry + 5, {
+      size: 9, color: r.tone ?? BLACK,
+      font: r.bold ? p.fontBold : p.font,
+      width: c.w * 0.55,
+    });
+    p.drawText(r.value, c.x + padX, ry + 5, {
+      size: 9, color: r.tone ?? BLACK,
+      font: r.bold ? p.fontBold : p.font,
+      width: c.w - padX * 2, align: "right",
+    });
+    p.drawLine(c.x + padX, c.x + c.w - padX, ry + rowH - 0.5, BORDER, 0.3);
+    ry += rowH;
+  }
+  ry += 8; // padding mot total-raden
+
+  // Total-rad (accent bg, vit text)
+  p.drawRect(c.x, ry, c.w, totalH, c.accent);
+  p.drawText(c.totalLabel, c.x + padX, ry + 11, {
+    font: p.fontBold, size: 9, color: WHITE, width: c.w * 0.55,
+  });
+  p.drawText(`${fmtMoney(c.total)} ${c.currency}`, c.x + padX, ry + 9, {
+    font: p.fontBold, size: 14, color: WHITE, width: c.w - padX * 2, align: "right",
+  });
+  ry += totalH;
+
+  // Fotnot (t.ex. årskostnad)
+  if (c.footnote) {
+    p.drawText(c.footnote, c.x + padX, ry + 5, {
+      font: p.fontItalic, size: 8, color: GREY, width: c.w - padX * 2, align: "right",
+    });
+    ry += footH;
+  }
+
+  return ry;
 }

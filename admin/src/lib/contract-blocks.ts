@@ -326,13 +326,15 @@ export function drawContractCover(
       color: BRAND,
     });
   }
-  p.drawText(bigLabel, MARGIN, MARGIN + 10, {
-    font: p.fontBold,
-    size: 20,
-    color: GREY,
-    width: CONTENT_W,
-    align: "right",
-  });
+  if (bigLabel) {
+    p.drawText(bigLabel, MARGIN, MARGIN + 10, {
+      font: p.fontBold,
+      size: 20,
+      color: GREY,
+      width: CONTENT_W,
+      align: "right",
+    });
+  }
   const dividerY = MARGIN + 70;
   p.drawLine(MARGIN, MARGIN + CONTENT_W, dividerY, BRAND, 2);
   p.cursor = dividerY + 22;
