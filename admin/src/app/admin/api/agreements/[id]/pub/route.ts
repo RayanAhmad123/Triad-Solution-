@@ -80,6 +80,7 @@ export async function GET(
       agreementDate: agreement.agreement_date,
       startDate: agreement.start_date,
       offerNumber: offerRes.offer?.offer_number ?? null,
+      agreementNumber: agreement.agreement_number ?? null,
     },
     templateRes.template.name,
   );

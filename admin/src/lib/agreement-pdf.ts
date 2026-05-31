@@ -45,9 +45,9 @@ export async function generateAgreementPdf(
     startDate: meta.startDate,
   });
 
-  // === 2. Villkor på ny sida med försättsblad ===
+  // === 2. Villkor på ny sida med försättsblad (utan top-right-label) ===
   p.newPage();
-  drawContractCover(p, logo, "AVTAL", "VILLKOR", "Bilaga till avtalet");
+  drawContractCover(p, logo, "", "VILLKOR", "Bilaga till avtalet");
   const ctx = buildVillkorCtx(
     offer.customer ?? null,
     meta.agreementDate,
