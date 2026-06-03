@@ -25,10 +25,10 @@ export function NewOfferButton({ customers }: { customers: Customer[] }) {
     offer_date: todayISO(),
     valid_until: plusDaysISO(30),
     project_description: "",
-    project_price: "0",
-    monthly_price: "0",
-    project_discount_pct: "0",
-    monthly_discount_pct: "0",
+    project_price: "",
+    monthly_price: "",
+    project_discount_pct: "",
+    monthly_discount_pct: "",
     other_costs: "",
     vat_rate: "25",
     currency: "SEK",
@@ -219,6 +219,7 @@ export function NewOfferButton({ customers }: { customers: Customer[] }) {
                       type="number"
                       step="any"
                       min="0"
+                      placeholder="0"
                       {...bind("project_price")}
                       className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm font-mono"
                     />
@@ -230,6 +231,7 @@ export function NewOfferButton({ customers }: { customers: Customer[] }) {
                       step="any"
                       min="0"
                       max="100"
+                      placeholder="0"
                       {...bind("project_discount_pct")}
                       className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm font-mono"
                     />
@@ -247,6 +249,7 @@ export function NewOfferButton({ customers }: { customers: Customer[] }) {
                       type="number"
                       step="any"
                       min="0"
+                      placeholder="0"
                       {...bind("monthly_price")}
                       className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm font-mono"
                     />
@@ -258,6 +261,7 @@ export function NewOfferButton({ customers }: { customers: Customer[] }) {
                       step="any"
                       min="0"
                       max="100"
+                      placeholder="0"
                       {...bind("monthly_discount_pct")}
                       className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm font-mono"
                     />

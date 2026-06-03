@@ -56,10 +56,10 @@ export function OfferEditor({
     offer_date: offer.offer_date,
     valid_until: offer.valid_until ?? "",
     project_description: offer.project_description ?? "",
-    project_price: String(offer.project_price ?? 0),
-    monthly_price: String(offer.monthly_price ?? 0),
-    project_discount_pct: String(offer.project_discount_pct ?? 0),
-    monthly_discount_pct: String(offer.monthly_discount_pct ?? 0),
+    project_price: offer.project_price ? String(offer.project_price) : "",
+    monthly_price: offer.monthly_price ? String(offer.monthly_price) : "",
+    project_discount_pct: offer.project_discount_pct ? String(offer.project_discount_pct) : "",
+    monthly_discount_pct: offer.monthly_discount_pct ? String(offer.monthly_discount_pct) : "",
     other_costs: offer.other_costs ?? "",
     vat_rate: String(offer.vat_rate ?? 25),
     currency: offer.currency ?? "SEK",
@@ -397,6 +397,7 @@ export function OfferEditor({
                     type="number"
                     step="any"
                     min="0"
+                    placeholder="0"
                     {...bind("project_price")}
                     className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm font-mono"
                   />
@@ -408,6 +409,7 @@ export function OfferEditor({
                     step="any"
                     min="0"
                     max="100"
+                    placeholder="0"
                     {...bind("project_discount_pct")}
                     className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm font-mono"
                   />
@@ -425,6 +427,7 @@ export function OfferEditor({
                     type="number"
                     step="any"
                     min="0"
+                    placeholder="0"
                     {...bind("monthly_price")}
                     className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm font-mono"
                   />
@@ -436,6 +439,7 @@ export function OfferEditor({
                     step="any"
                     min="0"
                     max="100"
+                    placeholder="0"
                     {...bind("monthly_discount_pct")}
                     className="mt-1 w-full rounded-btn bg-black/30 border border-white/10 px-3 py-2 text-sm font-mono"
                   />
