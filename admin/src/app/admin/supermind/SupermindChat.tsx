@@ -8,7 +8,16 @@ import { fmtDate } from "@/lib/date";
 export type ThreadSummary = { id: string; title: string | null; updated_at: string };
 
 type TraceItem = { tool: string; input: unknown; ok: boolean };
-type ChatMessage = { role: "user" | "assistant"; text: string; trace?: TraceItem[] };
+type ChatMessage = { role: "user" | "assistant"; text: string; trace?: TraceItem[]; model?: string };
+
+// Kort, läsbar etikett för modell-ID (claude-opus-4-8 → "Opus 4.8").
+function modelLabel(id?: string): string | null {
+  if (!id) return null;
+  const m = id.match(/claude-(opus|sonnet|haiku)-(\d)-(\d)/);
+  if (!m) return id;
+  const tier = m[1][0].toUpperCase() + m[1].slice(1);
+  return `${tier} ${m[2]}.${m[3]}`;
+}
 
 const SUGGESTIONS = [
   "Vad ska jag jobba med idag? Jag har 6 timmar.",
@@ -47,6 +56,7 @@ export function SupermindChat({ initialThreads }: { initialThreads: ThreadSummar
           role: m.role,
           text: m.content?.text ?? "",
           trace: m.content?.trace,
+          model: m.content?.model,
         })),
     );
   }
@@ -74,7 +84,7 @@ export function SupermindChat({ initialThreads }: { initialThreads: ThreadSummar
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Något gick fel");
       if (!threadId && json.threadId) setThreadId(json.threadId);
-      setMessages((m) => [...m, { role: "assistant", text: json.text, trace: json.trace }]);
+      setMessages((m) => [...m, { role: "assistant", text: json.text, trace: json.trace, model: json.model }]);
       router.refresh();
       // Uppdatera trådlistan lokalt så den nya tråden dyker upp.
       if (json.threadId) {
@@ -235,6 +245,9 @@ function Message({ msg }: { msg: ChatMessage }) {
         >
           {msg.text}
         </div>
+        {!isUser && modelLabel(msg.model) && (
+          <div className="mt-1 text-[10px] text-[var(--muted)]">{modelLabel(msg.model)}</div>
+        )}
       </div>
     </div>
   );

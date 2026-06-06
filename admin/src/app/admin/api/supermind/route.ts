@@ -69,7 +69,7 @@ export async function POST(req: Request) {
     {
       thread_id: threadId,
       role: "assistant",
-      content: { text: result.text, trace: result.trace, tokens: result.tokens },
+      content: { text: result.text, trace: result.trace, tokens: result.tokens, model: result.model },
     },
   ]);
   await supabase.from("ai_threads").update({ updated_at: new Date().toISOString() }).eq("id", threadId);
@@ -79,5 +79,6 @@ export async function POST(req: Request) {
     text: result.text,
     trace: result.trace,
     tokens: result.tokens,
+    model: result.model,
   });
 }
