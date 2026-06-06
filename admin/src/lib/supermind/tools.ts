@@ -74,9 +74,9 @@ export const TOOL_DEFS: Anthropic.Tool[] = [
     input_schema: { type: "object", properties: {} },
   },
   {
-    name: "get_capacity",
+    name: "get_team",
     description:
-      "Hämta varje medlems veckokapacitet i timmar — hur mycket tid teamet har att lägga. Använd för att planera arbete utifrån tillgänglig tid.",
+      "Hämta teamet: varje medlems roll, expertis/passande uppgifter och veckokapacitet (timmar). Använd för att föreslå VEM som ska göra VAD och för att planera utifrån tillgänglig tid.",
     input_schema: { type: "object", properties: {} },
   },
 ];
@@ -106,8 +106,8 @@ export async function runTool(
         return await financeSummary(supabase);
       case "list_meetings":
         return await listMeetings(supabase);
-      case "get_capacity":
-        return await getCapacity(supabase);
+      case "get_team":
+        return await getTeam(supabase);
       default:
         return { ok: false, error: `Okänt verktyg: ${name}` };
     }
@@ -313,20 +313,25 @@ async function listMeetings(supabase: SupabaseClient): Promise<ToolResult> {
   };
 }
 
-async function getCapacity(supabase: SupabaseClient): Promise<ToolResult> {
+async function getTeam(supabase: SupabaseClient): Promise<ToolResult> {
   const [profilesRes, capRes] = await Promise.all([
     supabase.from("profiles").select("id,display_name,email"),
-    supabase.from("member_capacity").select("profile_id,weekly_hours"),
+    supabase.from("member_capacity").select("profile_id,weekly_hours,role,skills"),
   ]);
-  const hours = new Map<string, number>(
-    (capRes.data ?? []).map((c: any) => [c.profile_id, Number(c.weekly_hours) || 0]),
+  const capById = new Map<string, any>(
+    (capRes.data ?? []).map((c: any) => [c.profile_id, c]),
   );
   return {
     ok: true,
-    data: (profilesRes.data ?? []).map((p: any) => ({
-      id: p.id,
-      name: p.display_name ?? p.email,
-      weekly_hours: hours.get(p.id) ?? 0,
-    })),
+    data: (profilesRes.data ?? []).map((p: any) => {
+      const c = capById.get(p.id);
+      return {
+        id: p.id,
+        name: p.display_name ?? p.email,
+        role: c?.role ?? null,
+        skills: c?.skills ?? null,
+        weekly_hours: Number(c?.weekly_hours) || 0,
+      };
+    }),
   };
 }

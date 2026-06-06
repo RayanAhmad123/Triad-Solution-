@@ -14,7 +14,7 @@ export default async function SettingsPage() {
       .eq("id", 1)
       .maybeSingle(),
     supabase.from("profiles").select("id,display_name,email").order("display_name"),
-    supabase.from("member_capacity").select("profile_id,weekly_hours"),
+    supabase.from("member_capacity").select("profile_id,weekly_hours,role,skills"),
   ]);
 
   const settings = {
@@ -26,13 +26,15 @@ export default async function SettingsPage() {
     dpo: data?.dpo ?? "Ej utsett",
   };
 
-  const hoursById = new Map<string, number>(
-    (capacity ?? []).map((c: any) => [c.profile_id, Number(c.weekly_hours) || 0]),
+  const capById = new Map<string, any>(
+    (capacity ?? []).map((c: any) => [c.profile_id, c]),
   );
   const members = (profiles ?? []).map((p: any) => ({
     id: p.id,
     name: p.display_name ?? p.email ?? p.id.slice(0, 8),
-    weekly_hours: hoursById.get(p.id) ?? 0,
+    weekly_hours: Number(capById.get(p.id)?.weekly_hours) || 0,
+    role: capById.get(p.id)?.role ?? "",
+    skills: capById.get(p.id)?.skills ?? "",
   }));
 
   return (
