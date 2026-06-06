@@ -5,6 +5,8 @@
 // ekonomi) förblir läsläge.
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type Anthropic from "@anthropic-ai/sdk";
+import { getRepoScan } from "@/lib/github";
+import { summarizeProjectState } from "./models";
 
 // Statisk lista (stabil ordning) så att prompt-cachen håller — ändra inte
 // ordningen lättvindigt.
@@ -79,6 +81,16 @@ export const READ_TOOL_DEFS: Anthropic.Tool[] = [
     description:
       "Hämta teamet: varje medlems roll, expertis/passande uppgifter och veckokapacitet (timmar). Använd för att föreslå VEM som ska göra VAD och för att planera utifrån tillgänglig tid.",
     input_schema: { type: "object", properties: {} },
+  },
+  {
+    name: "scan_project",
+    description:
+      "Skanna ett projekts FAKTISKA läge: läser kopplat GitHub-repo (filträd, README, senaste commits) + befintliga uppgifter och returnerar en lägesbild (vad som är byggt, vad som pågår, verkliga luckor). Kör ALLTID detta innan du skapar eller planerar uppgifter för ett projekt — annars riskerar du att föreslå arbete som redan är gjort.",
+    input_schema: {
+      type: "object",
+      properties: { project_id: { type: "string", description: "Projektets UUID" } },
+      required: ["project_id"],
+    },
   },
 ];
 
@@ -176,6 +188,8 @@ export async function runTool(
         return await listMeetings(supabase);
       case "get_team":
         return await getTeam(supabase);
+      case "scan_project":
+        return await scanProject(supabase, input.project_id as string);
       case "create_task":
         return await createTask(supabase, userId, input);
       case "update_task":
@@ -407,6 +421,76 @@ async function getTeam(supabase: SupabaseClient): Promise<ToolResult> {
         weekly_hours: Number(c?.weekly_hours) || 0,
       };
     }),
+  };
+}
+
+// Skanna projektets faktiska läge: repo (filträd/README/commits) + uppgifter,
+// hopkokt till en lägesbild av Haiku. Opus planerar sedan utifrån verkligheten
+// i stället för generiska uppstartssteg.
+async function scanProject(supabase: SupabaseClient, projectId: string): Promise<ToolResult> {
+  if (!projectId) return { ok: false, error: "project_id krävs" };
+
+  const { data: project, error } = await supabase
+    .from("projects")
+    .select("id,name,status,summary,github_owner,github_repo")
+    .eq("id", projectId)
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!project) return { ok: false, error: "Projektet hittades inte" };
+
+  const { data: tasks } = await supabase
+    .from("tasks")
+    .select("title,status")
+    .eq("project_id", projectId)
+    .order("created_at", { ascending: true });
+
+  const p = project as any;
+  const parts: string[] = [
+    `Projekt: ${p.name}`,
+    `Portalstatus: ${p.status ?? "—"}`,
+    p.summary ? `Sammanfattning: ${p.summary}` : "",
+    "",
+    "Befintliga uppgifter i portalen:",
+    (tasks ?? []).length
+      ? (tasks ?? []).map((t: any) => `- [${t.status}] ${t.title}`).join("\n")
+      : "- (inga)",
+  ];
+
+  let repoNote = "Inget GitHub-repo är kopplat till projektet.";
+  if (p.github_owner && p.github_repo) {
+    const res = await getRepoScan({ owner: p.github_owner, repo: p.github_repo });
+    if (res.ok) {
+      const s = res.scan;
+      repoNote = [
+        `GitHub-repo: ${p.github_owner}/${p.github_repo} (branch ${s.defaultBranch})`,
+        "",
+        "Senaste commits:",
+        s.commits.length
+          ? s.commits.map((c) => `- ${c.message} (${c.date ?? "?"})`).join("\n")
+          : "- (inga)",
+        "",
+        `Filträd${s.filesTruncated ? " (kapat)" : ""}:`,
+        s.files.length ? s.files.join("\n") : "(tomt)",
+        "",
+        s.readme ? `README:\n${s.readme}` : "Ingen README.",
+      ].join("\n");
+    } else {
+      repoNote = `GitHub-repo ${p.github_owner}/${p.github_repo} kunde inte läsas (${res.reason}). Skanna utifrån portaldata.`;
+    }
+  }
+
+  const contextText = `${parts.filter(Boolean).join("\n")}\n\n${repoNote}`;
+  const { summary } = await summarizeProjectState(contextText);
+
+  return {
+    ok: true,
+    data: {
+      project: p.name,
+      has_repo: Boolean(p.github_owner && p.github_repo),
+      state_summary:
+        summary ||
+        "Kunde inte generera en AI-lägesbild (saknar nyckel eller fel). Bedöm utifrån uppgifter och ev. repo-data.",
+    },
   };
 }
 
