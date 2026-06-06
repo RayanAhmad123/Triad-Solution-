@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/PageHeader";
 import { CompanySettingsForm } from "./CompanySettingsForm";
 import { CapacitySettings } from "./CapacitySettings";
+import { AiSettings } from "./AiSettings";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +11,7 @@ export default async function SettingsPage() {
   const [{ data }, { data: profiles }, { data: capacity }] = await Promise.all([
     supabase
       .from("company_settings")
-      .select("name,org_number,address,email,phone,dpo")
+      .select("name,org_number,address,email,phone,dpo,ai_enabled")
       .eq("id", 1)
       .maybeSingle(),
     supabase.from("profiles").select("id,display_name,email").order("display_name"),
@@ -45,6 +46,7 @@ export default async function SettingsPage() {
       />
       <div className="space-y-6">
         <CompanySettingsForm settings={settings} />
+        <AiSettings aiEnabled={data?.ai_enabled === true} />
         <CapacitySettings members={members} />
       </div>
     </>

@@ -1,13 +1,14 @@
-// Supermind Fas 2: LÄS-verktyg över portalens data. Alla körs med den
-// inloggade medlemmens Supabase-klient, så RLS gäller — AI:n ser bara det
-// medlemmen får se. Inga skrivningar i Fas 2 (advisor-läge); skrivverktyg
-// och autonomi kommer i Fas 3.
+// Supermind-verktyg över portalens data. Alla körs med den inloggade medlemmens
+// Supabase-klient, så RLS gäller — AI:n ser/ändrar bara det medlemmen får.
+// LÄS-verktyg är alltid på. SKRIV-verktyg (endast uppgifter) aktiveras via
+// kill switch:en company_settings.ai_enabled. Känsligare data (offerter, kunder,
+// ekonomi) förblir läsläge.
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type Anthropic from "@anthropic-ai/sdk";
 
-// Verktygsdefinitionerna som skickas till Claude. Statisk lista (stabil ordning)
-// så att prompt-cachen håller — ändra inte ordningen lättvindigt.
-export const TOOL_DEFS: Anthropic.Tool[] = [
+// Statisk lista (stabil ordning) så att prompt-cachen håller — ändra inte
+// ordningen lättvindigt.
+export const READ_TOOL_DEFS: Anthropic.Tool[] = [
   {
     name: "list_projects",
     description:
@@ -81,12 +82,79 @@ export const TOOL_DEFS: Anthropic.Tool[] = [
   },
 ];
 
+// SKRIV-verktyg — endast uppgifter, och bara när ai_enabled är på. Inga hårda
+// raderingar: "ta bort" = arkivera (status archived), vilket är återställbart.
+export const WRITE_TOOL_DEFS: Anthropic.Tool[] = [
+  {
+    name: "create_task",
+    description:
+      "Skapa en ny uppgift. Ange minst en titel. Använd id:n från andra verktyg (get_team för assignee_ids, list_projects för project_id). Skapa bara uppgifter användaren faktiskt bett om.",
+    input_schema: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Vad ska göras (obligatoriskt)" },
+        description: { type: "string" },
+        project_id: { type: "string", description: "UUID för kopplat projekt" },
+        assignee_ids: {
+          type: "array",
+          items: { type: "string" },
+          description: "Profil-UUID:n (från get_team) för de som tilldelas",
+        },
+        priority: { type: "string", description: "low | medium | high" },
+        status: { type: "string", description: "not_started | in_progress | done" },
+        due_at: { type: "string", description: "Deadline, ISO-datum (YYYY-MM-DD)" },
+        estimate_hours: { type: "number", description: "Uppskattad tid i timmar" },
+      },
+      required: ["title"],
+    },
+  },
+  {
+    name: "update_task",
+    description:
+      "Uppdatera en befintlig uppgift. Ange task_id och bara de fält som ska ändras. Tilldelning (assignee_ids) ERSÄTTER hela listan.",
+    input_schema: {
+      type: "object",
+      properties: {
+        task_id: { type: "string", description: "Uppgiftens UUID (obligatoriskt)" },
+        title: { type: "string" },
+        description: { type: "string" },
+        project_id: { type: "string" },
+        assignee_ids: { type: "array", items: { type: "string" } },
+        priority: { type: "string", description: "low | medium | high" },
+        status: { type: "string", description: "not_started | in_progress | done" },
+        due_at: { type: "string", description: "ISO-datum, eller tom sträng för att rensa" },
+        estimate_hours: { type: "number" },
+      },
+      required: ["task_id"],
+    },
+  },
+  {
+    name: "archive_task",
+    description:
+      "Arkivera en uppgift (status = archived). Använd i stället för radering — det är återställbart. Ange task_id.",
+    input_schema: {
+      type: "object",
+      properties: { task_id: { type: "string" } },
+      required: ["task_id"],
+    },
+  },
+];
+
+// Nivå per verktyg för revisionsloggen. Grön = ofarlig auto; gul = återställbar
+// men mer ingripande (arkivering). Allt loggas till ai_actions.
+const YELLOW_TOOLS = new Set(["archive_task"]);
+export function toolTier(name: string): "green" | "yellow" {
+  return YELLOW_TOOLS.has(name) ? "yellow" : "green";
+}
+
 type ToolResult = { ok: true; data: unknown } | { ok: false; error: string };
 
 // Dispatch + exekvering. Returnerar alltid ett serialiserbart objekt; kastar
-// aldrig (fel paketeras så att Claude kan resonera kring dem).
+// aldrig (fel paketeras så att Claude kan resonera kring dem). userId används
+// som created_by för nya uppgifter.
 export async function runTool(
   supabase: SupabaseClient,
+  userId: string,
   name: string,
   input: Record<string, unknown>,
 ): Promise<ToolResult> {
@@ -108,6 +176,12 @@ export async function runTool(
         return await listMeetings(supabase);
       case "get_team":
         return await getTeam(supabase);
+      case "create_task":
+        return await createTask(supabase, userId, input);
+      case "update_task":
+        return await updateTask(supabase, input);
+      case "archive_task":
+        return await archiveTask(supabase, input.task_id as string);
       default:
         return { ok: false, error: `Okänt verktyg: ${name}` };
     }
@@ -334,4 +408,114 @@ async function getTeam(supabase: SupabaseClient): Promise<ToolResult> {
       };
     }),
   };
+}
+
+// ---- SKRIV-verktyg (uppgifter) -------------------------------------------
+
+const VALID_STATUS = new Set(["not_started", "in_progress", "done", "archived"]);
+const VALID_PRIORITY = new Set(["low", "medium", "high"]);
+
+// Tolka ett datum till ISO-timestamp. Tom sträng → null (rensa). Ogiltigt → undefined.
+function toIso(v: unknown): string | null | undefined {
+  if (v === "" || v === null) return null;
+  if (typeof v !== "string") return undefined;
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
+}
+
+async function createTask(
+  supabase: SupabaseClient,
+  userId: string,
+  input: Record<string, unknown>,
+): Promise<ToolResult> {
+  const title = typeof input.title === "string" ? input.title.trim() : "";
+  if (!title) return { ok: false, error: "title krävs" };
+
+  const status = VALID_STATUS.has(input.status as string)
+    ? (input.status as string)
+    : "not_started";
+  const priority = VALID_PRIORITY.has(input.priority as string)
+    ? (input.priority as string)
+    : "medium";
+  const due = toIso(input.due_at);
+
+  const payload: Record<string, unknown> = {
+    title,
+    description: typeof input.description === "string" ? input.description.trim() || null : null,
+    status,
+    priority,
+    assignee_ids: Array.isArray(input.assignee_ids) ? input.assignee_ids : [],
+    project_id: (input.project_id as string) || null,
+    estimate_hours: input.estimate_hours != null ? Number(input.estimate_hours) : null,
+    due_at: due === undefined ? null : due,
+    completed_at: status === "done" ? new Date().toISOString() : null,
+    created_by: userId,
+  };
+
+  const { data, error } = await supabase
+    .from("tasks")
+    .insert(payload)
+    .select("id,title,status")
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, data: { created: data } };
+}
+
+async function updateTask(
+  supabase: SupabaseClient,
+  input: Record<string, unknown>,
+): Promise<ToolResult> {
+  const taskId = input.task_id as string;
+  if (!taskId) return { ok: false, error: "task_id krävs" };
+
+  // Bygg patch endast av angivna fält.
+  const patch: Record<string, unknown> = {};
+  if (typeof input.title === "string") patch.title = input.title.trim();
+  if (typeof input.description === "string") patch.description = input.description.trim() || null;
+  if (input.status !== undefined) {
+    if (!VALID_STATUS.has(input.status as string))
+      return { ok: false, error: `Ogiltig status: ${input.status}` };
+    patch.status = input.status;
+    patch.completed_at = input.status === "done" ? new Date().toISOString() : null;
+  }
+  if (input.priority !== undefined) {
+    if (!VALID_PRIORITY.has(input.priority as string))
+      return { ok: false, error: `Ogiltig prioritet: ${input.priority}` };
+    patch.priority = input.priority;
+  }
+  if (input.project_id !== undefined) patch.project_id = (input.project_id as string) || null;
+  if (Array.isArray(input.assignee_ids)) patch.assignee_ids = input.assignee_ids;
+  if (input.estimate_hours !== undefined)
+    patch.estimate_hours = input.estimate_hours === null ? null : Number(input.estimate_hours);
+  if (input.due_at !== undefined) {
+    const due = toIso(input.due_at);
+    if (due === undefined) return { ok: false, error: "Ogiltigt due_at-datum" };
+    patch.due_at = due;
+  }
+
+  if (Object.keys(patch).length === 0)
+    return { ok: false, error: "Inga fält att uppdatera angavs" };
+
+  const { data, error } = await supabase
+    .from("tasks")
+    .update(patch)
+    .eq("id", taskId)
+    .select("id,title,status")
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!data) return { ok: false, error: "Uppgiften hittades inte" };
+  return { ok: true, data: { updated: data, changed: Object.keys(patch) } };
+}
+
+async function archiveTask(supabase: SupabaseClient, taskId: string): Promise<ToolResult> {
+  if (!taskId) return { ok: false, error: "task_id krävs" };
+  const { data, error } = await supabase
+    .from("tasks")
+    .update({ status: "archived" })
+    .eq("id", taskId)
+    .select("id,title")
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!data) return { ok: false, error: "Uppgiften hittades inte" };
+  return { ok: true, data: { archived: data } };
 }
