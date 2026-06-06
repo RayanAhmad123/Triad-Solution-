@@ -1,11 +1,14 @@
 // Supermind Fas 2: den agentiska loopen. Manuell loop (inte tool-runner) så att
 // vi kan logga varje verktygsanrop till ai_runs/ai_actions och senare (Fas 3)
 // lägga in skriv-gates. Läsläge — inga skrivningar mot portaldata.
+//
+// Hybrid modelluppsättning: Haiku triagerar varje tur billigt och svarar direkt
+// på triviala turer; Opus kör den tunga planeringsloopen med verktyg.
 import Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { TOOL_DEFS, runTool } from "./tools";
+import { PLANNING_MODEL, FAST_MODEL, triageMessage } from "./models";
 
-const MODEL = "claude-opus-4-8";
 const MAX_ITERATIONS = 8;
 
 // Frusen systemprompt → cachas. Ändra inte per request (inget datum, inga
@@ -39,16 +42,26 @@ export type AgentResult = {
   text: string;
   trace: AgentTrace;
   tokens: number;
+  model: string;
   runId: string | null;
 };
 
+// Sista user-meddelandet (sträng) i historiken — det vi triagerar.
+function lastUserText(history: Anthropic.MessageParam[]): string {
+  for (let i = history.length - 1; i >= 0; i--) {
+    const m = history[i];
+    if (m.role === "user" && typeof m.content === "string") return m.content;
+  }
+  return "";
+}
+
 /**
- * Kör en runda: tar hela konversationen (user/assistant-text) + dagens kontext,
- * loopar tool-use tills modellen är klar, och returnerar slutsvaret.
- * Loggar körningen och varje verktygsanrop till ai_runs/ai_actions.
+ * Kör en runda: triagerar turen med Haiku, svarar direkt om den är trivial,
+ * annars kör Opus-loopen med verktyg. Loggar körningen och varje verktygsanrop.
  */
 export async function runSupermind(
   supabase: SupabaseClient,
+  userId: string,
   history: Anthropic.MessageParam[],
   contextNote: string,
 ): Promise<AgentResult> {
@@ -58,19 +71,40 @@ export async function runSupermind(
       text: "ANTHROPIC_API_KEY saknas på servern. Lägg till den i miljövariablerna för att aktivera supermind:en.",
       trace: [],
       tokens: 0,
+      model: PLANNING_MODEL,
       runId: null,
     };
   }
 
   const client = new Anthropic({ apiKey });
+
+  // 1. Snabb triage med Haiku.
+  const triage = await triageMessage(client, lastUserText(history));
+
+  // 2. Trivial tur → svara direkt med Haiku-svaret, hoppa över Opus.
+  if (!triage.needsPortalData && triage.directReply) {
+    const { data: runRow } = await supabase
+      .from("ai_runs")
+      .insert({ kind: "chat_fast", status: "done", summary: triage.directReply.slice(0, 500), tokens: triage.tokens, created_by: userId })
+      .select("id")
+      .maybeSingle();
+    return {
+      text: triage.directReply,
+      trace: [],
+      tokens: triage.tokens,
+      model: FAST_MODEL,
+      runId: (runRow as any)?.id ?? null,
+    };
+  }
+
+  // 3. Substantiell tur → Opus-loopen med verktyg.
   const messages: Anthropic.MessageParam[] = [...history];
   const trace: AgentTrace = [];
-  let tokens = 0;
+  let tokens = triage.tokens;
 
-  // Starta en körningslogg.
   const { data: runRow } = await supabase
     .from("ai_runs")
-    .insert({ kind: "chat", status: "running" })
+    .insert({ kind: "chat", status: "running", created_by: userId })
     .select("id")
     .maybeSingle();
   const runId = (runRow as any)?.id ?? null;
@@ -79,7 +113,7 @@ export async function runSupermind(
   try {
     for (let i = 0; i < MAX_ITERATIONS; i++) {
       const response = await client.messages.create({
-        model: MODEL,
+        model: PLANNING_MODEL,
         max_tokens: 16000,
         thinking: { type: "adaptive" },
         output_config: { effort: "high" },
@@ -151,8 +185,8 @@ export async function runSupermind(
     if (runId) {
       await supabase.from("ai_runs").update({ status: "error", summary: msg, tokens }).eq("id", runId);
     }
-    return { text: `Fel vid AI-anrop: ${msg}`, trace, tokens, runId };
+    return { text: `Fel vid AI-anrop: ${msg}`, trace, tokens, model: PLANNING_MODEL, runId };
   }
 
-  return { text: finalText, trace, tokens, runId };
+  return { text: finalText, trace, tokens, model: PLANNING_MODEL, runId };
 }

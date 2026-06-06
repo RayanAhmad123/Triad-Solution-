@@ -61,7 +61,7 @@ export async function POST(req: Request) {
   const who = user.email ?? "okänd medlem";
   const contextNote = `Dagens datum: ${today}. Inloggad medlem: ${who}.`;
 
-  const result = await runSupermind(supabase, history, contextNote);
+  const result = await runSupermind(supabase, user.id, history, contextNote);
 
   // Spara user- och assistant-meddelandet.
   await supabase.from("ai_messages").insert([
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
     {
       thread_id: threadId,
       role: "assistant",
-      content: { text: result.text, trace: result.trace, tokens: result.tokens },
+      content: { text: result.text, trace: result.trace, tokens: result.tokens, model: result.model },
     },
   ]);
   await supabase.from("ai_threads").update({ updated_at: new Date().toISOString() }).eq("id", threadId);
@@ -79,5 +79,6 @@ export async function POST(req: Request) {
     text: result.text,
     trace: result.trace,
     tokens: result.tokens,
+    model: result.model,
   });
 }
