@@ -1,7 +1,7 @@
 // Supermind: hybrid modelluppsättning. Opus gör tung planering/resonemang;
-// Haiku gör billig, snabb triage av varje meddelande. Modell-ID:n är
-// konfigurerbara via env men har vettiga standardvärden.
-import type Anthropic from "@anthropic-ai/sdk";
+// Haiku gör billig, snabb triage OCH skannar projektens faktiska läge (mycket
+// kontext, billiga tokens). Modell-ID:n är konfigurerbara via env.
+import Anthropic from "@anthropic-ai/sdk";
 
 // Tung modell för den agentiska planeringsloopen (verktyg, resonemang).
 export const PLANNING_MODEL = process.env.SUPERMIND_PLANNING_MODEL || "claude-opus-4-8";
@@ -81,5 +81,49 @@ export async function triageMessage(
   } catch {
     // Säker fallback: kör Opus-loopen.
     return { needsPortalData: true, directReply: "", tokens: 0 };
+  }
+}
+
+const SCAN_SYSTEM = `Du analyserar ett mjukvaruprojekts FAKTISKA läge utifrån dess GitHub-repo
+(filträd, README, senaste commits) och befintliga uppgifter i portalen.
+
+Sammanfatta kort och faktabaserat på svenska:
+1. KLART/BYGGT — funktioner och delar som koden visar redan finns (härled från filer/mappar,
+   beroenden, README och commits).
+2. PÅGÅR — det som verkar vara under arbete.
+3. LUCKOR / NÄSTA STEG — vad som rimligen saknas för att projektet ska bli klart.
+
+Viktigt: lista INTE generiska uppstartssteg (t.ex. "definiera scope", "välj teknik", "sätt
+upp repo/CI") om filträdet eller commits visar att de redan är gjorda. Var konkret om vad
+som faktiskt finns. Om underlaget är tunt, säg det.`;
+
+/**
+ * Skannar ett projekts läge med Haiku (billig, tål mycket kontext). Returnerar
+ * en kompakt lägesbild som Opus sedan planerar utifrån. Failar mjukt: vid
+ * saknad nyckel eller fel returneras tom sammanfattning så att anroparen kan
+ * falla tillbaka på rå kontext.
+ */
+export async function summarizeProjectState(
+  contextText: string,
+): Promise<{ summary: string; tokens: number }> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return { summary: "", tokens: 0 };
+  try {
+    const client = new Anthropic({ apiKey });
+    const res = await client.messages.create({
+      model: FAST_MODEL,
+      max_tokens: 1200,
+      system: SCAN_SYSTEM,
+      messages: [{ role: "user", content: contextText }],
+    });
+    const tokens = (res.usage?.input_tokens ?? 0) + (res.usage?.output_tokens ?? 0);
+    const text = res.content
+      .filter((b): b is Anthropic.TextBlock => b.type === "text")
+      .map((b) => b.text)
+      .join("\n")
+      .trim();
+    return { summary: text, tokens };
+  } catch {
+    return { summary: "", tokens: 0 };
   }
 }

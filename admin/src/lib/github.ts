@@ -186,3 +186,94 @@ async function fetchLatestCi(
 function msg(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
 }
+
+// ---- Repo-skanning (för supermind:ens scan_project) ----------------------
+
+export type RepoScan = {
+  defaultBranch: string;
+  files: string[]; // filsökvägar (brus bortfiltrerat, kapat)
+  filesTruncated: boolean;
+  readme: string | null;
+  commits: RepoCommit[];
+};
+
+export type RepoScanResult =
+  | { ok: true; scan: RepoScan }
+  | { ok: false; reason: "no-token" | "not-found" | "error"; message: string };
+
+// Mappar/filer som inte säger något om vad som är byggt — filtreras bort.
+const NOISE = /(^|\/)(node_modules|\.next|\.git|dist|build|out|coverage|\.turbo|vendor)(\/|$)/;
+
+/**
+ * Hämtar en ögonblicksbild av ett repo för läges-analys: filträd, README och
+ * senaste commits. Allt degraderar var för sig; kastar aldrig uppåt.
+ */
+export async function getRepoScan(ref: RepoRef): Promise<RepoScanResult> {
+  if (!githubConfigured()) return { ok: false, reason: "no-token", message: "GITHUB_TOKEN saknas" };
+
+  let repoRes: Response;
+  try {
+    repoRes = await gh(`/repos/${ref.owner}/${ref.repo}`);
+  } catch (e) {
+    return { ok: false, reason: "error", message: msg(e) };
+  }
+  if (repoRes.status === 404)
+    return { ok: false, reason: "not-found", message: "Repo hittades inte (eller saknar åtkomst)" };
+  if (!repoRes.ok) return { ok: false, reason: "error", message: `GitHub svarade ${repoRes.status}` };
+
+  const repo = (await repoRes.json()) as { default_branch: string };
+  const branch = repo.default_branch ?? "main";
+
+  const [tree, readme, commits] = await Promise.all([
+    fetchTree(ref, branch),
+    fetchReadme(ref),
+    fetchCommits(ref, branch),
+  ]);
+
+  return {
+    ok: true,
+    scan: {
+      defaultBranch: branch,
+      files: tree.files,
+      filesTruncated: tree.truncated,
+      readme,
+      commits,
+    },
+  };
+}
+
+async function fetchTree(
+  ref: RepoRef,
+  branch: string,
+): Promise<{ files: string[]; truncated: boolean }> {
+  try {
+    const res = await gh(
+      `/repos/${ref.owner}/${ref.repo}/git/trees/${encodeURIComponent(branch)}?recursive=1`,
+    );
+    if (!res.ok) return { files: [], truncated: false };
+    const json = (await res.json()) as { tree?: any[]; truncated?: boolean };
+    const files = (json.tree ?? [])
+      .filter((t) => t.type === "blob" && typeof t.path === "string" && !NOISE.test(t.path))
+      .map((t) => t.path as string)
+      .slice(0, 300); // håll prompten kompakt
+    return { files, truncated: Boolean(json.truncated) };
+  } catch {
+    return { files: [], truncated: false };
+  }
+}
+
+async function fetchReadme(ref: RepoRef): Promise<string | null> {
+  try {
+    const res = await gh(`/repos/${ref.owner}/${ref.repo}/readme`);
+    if (!res.ok) return null;
+    const json = (await res.json()) as { content?: string; encoding?: string };
+    if (!json.content) return null;
+    const decoded =
+      json.encoding === "base64"
+        ? Buffer.from(json.content, "base64").toString("utf8")
+        : json.content;
+    return decoded.slice(0, 4000); // kapa långa README
+  } catch {
+    return null;
+  }
+}

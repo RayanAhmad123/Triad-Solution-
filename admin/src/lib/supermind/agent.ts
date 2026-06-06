@@ -9,7 +9,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { READ_TOOL_DEFS, WRITE_TOOL_DEFS, runTool, toolTier } from "./tools";
 import { PLANNING_MODEL, FAST_MODEL, triageMessage } from "./models";
 
-const MAX_ITERATIONS = 8;
+const MAX_ITERATIONS = 10;
 
 // Frusen systemprompt → cachas. Ändra inte per request (inget datum, inga
 // namn här) annars slås prompt-cachen sönder.
@@ -34,6 +34,9 @@ Arbetssätt:
 - När någon ber om en plan utifrån tillgänglig tid: hämta teamet (roller + kapacitet), väg
   uppgifternas tidsuppskattning mot deadlines och intäktspåverkan, och föreslå en tidssatt,
   prioriterad lista som ryms inom timmarna — med rätt person på rätt uppgift.
+- Innan du föreslår eller skapar uppgifter för ETT specifikt projekt: kör ALLTID scan_project
+  först för att se vad som FAKTISKT är byggt (repo + befintliga uppgifter). Föreslå bara
+  arbete för verkliga luckor — aldrig generiska uppstartssteg om koden visar att de är gjorda.
 - Var ärlig om osäkerhet och sakna data. Hitta inte på siffror.`;
 
 // Lägesspecifika avslut. Konkateneras med SYSTEM → två frusna varianter, var
@@ -45,6 +48,8 @@ const MODE_WRITE = `
 Du har SKRIVLÄGE för UPPGIFTER. Du kan skapa, uppdatera och arkivera uppgifter med
 verktygen create_task, update_task och archive_task. Regler:
 - Gör bara det användaren faktiskt ber om. Skapa/ändra inte uppgifter oombedd.
+- Innan du skapar uppgifter för ett projekt: kör scan_project för att förstå vad som redan
+  är byggt, så att du bara skapar uppgifter för verkliga luckor.
 - Hämta nödvändiga id:n först (get_team för personer, list_projects för projekt,
   list_tasks för att hitta rätt uppgift) innan du skriver.
 - Radera aldrig hårt — arkivera (archive_task) i stället.
